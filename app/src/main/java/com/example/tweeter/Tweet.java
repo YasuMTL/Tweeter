@@ -123,7 +123,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             case R.id.btnSendTweet:
                 if (notOverLetterLimit()){
                     tweet();
-                    etTweet.setText("");
                 }else{
                     Toast.makeText(this, "Over 140 letters!", Toast.LENGTH_SHORT).show();
                 }
@@ -174,16 +173,27 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         new LoginTwitter().execute();
     }//END login
 
+    private void clearOutEtTweet(){
+        etTweet.setText("");
+    }
+
     private void tweet() {
         Toast.makeText(this, "Now sending", Toast.LENGTH_SHORT).show();
+        boolean wasTweetSent = true;
 
         try {
             new SendTweet().execute(etTweet.getText().toString());
         }catch (Exception e){
             e.printStackTrace();
+            wasTweetSent = false;
         }
 
-        Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
+        if (wasTweetSent){
+            clearOutEtTweet();
+            Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(this, "Something is wrong...", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private ConfigurationBuilder setTwitterKeysAndTokens(){
@@ -254,5 +264,3 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         }
     }//END LoginTwitter
 }
-
-

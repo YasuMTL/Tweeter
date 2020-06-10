@@ -57,6 +57,7 @@ public class ReceiveToken extends AppCompatActivity {
         @Override
         protected Object doInBackground(Object[] objects) {
             String varifier = uri.getQueryParameter("oauth_verifier");
+
             try {
                 mToken = Tweet.mOauth.getOAuthAccessToken(Tweet.mRequest, varifier);
             } catch (TwitterException e) {
