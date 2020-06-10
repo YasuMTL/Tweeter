@@ -23,7 +23,7 @@ import twitter4j.conf.ConfigurationContext;
 
 public class Tweet extends AppCompatActivity implements View.OnClickListener
 {
-    Button btnTweet, btnLogin, btnLogout;
+    Button btnTweet, btnLogin, btnLogout, btnClear;
     EditText etTweet;
     // Login
     static OAuthAuthorization mOauth;
@@ -45,11 +45,13 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         btnTweet = findViewById(R.id.btnSendTweet);
         btnLogin = findViewById(R.id.btnLogin);
         btnLogout = findViewById(R.id.btnLogOut);
+        btnClear = findViewById(R.id.btnClear);
         etTweet = findViewById(R.id.etTweet);
 
         btnTweet.setOnClickListener(this);
         btnLogin.setOnClickListener(this);
         btnLogout.setOnClickListener(this);
+        btnClear.setOnClickListener(this);
 
         spTwitterToken = getSharedPreferences("twitterToken", MODE_PRIVATE);
         didILogIn = spTwitterToken.getBoolean("login", false);
@@ -58,10 +60,12 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnLogin.setVisibility(View.INVISIBLE);
             btnTweet.setVisibility(View.VISIBLE);
             btnLogout.setVisibility(View.VISIBLE);
+            btnClear.setVisibility(View.VISIBLE);
         }else{
             btnLogin.setVisibility(View.VISIBLE);
             btnTweet.setVisibility(View.INVISIBLE);
             btnLogout.setVisibility(View.INVISIBLE);
+            btnClear.setVisibility(View.INVISIBLE);
         }
 
         mOauth = new OAuthAuthorization(ConfigurationContext.getInstance());
@@ -117,15 +121,36 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 break;
 
             case R.id.btnSendTweet:
-                tweet();
+                if (notOverLetterLimit()){
+                    tweet();
+                }else{
+                    Toast.makeText(this, "Over 140 letters!", Toast.LENGTH_SHORT).show();
+                }
+
                 break;
 
             case R.id.btnLogOut:
                 logout();
-
+                //Need to review. Look at "Enregistreur harcèlement"
                 Intent redirect = new Intent(Tweet.this, Tweet.class);
                 startActivity(redirect);
                 break;
+
+            case R.id.btnClear:
+                etTweet.setText("");
+                break;
+        }
+    }
+
+    private boolean notOverLetterLimit(){
+
+        String tweetDraft = etTweet.getText().toString();
+        int numTweetLetters = tweetDraft.length();
+
+        if (numTweetLetters < 141){
+            return true;
+        }else{
+            return false;
         }
     }
 
@@ -145,24 +170,30 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void login() {
-        final String TAG = "login()";
-        Log.d(TAG, "--------------- START ---------------");
-
         new LoginTwitter().execute();
-
-        Log.d(TAG, "--------------- END ---------------");
     }//END login
+
+    private void clearOutEtTweet(){
+        etTweet.setText("");
+    }
 
     private void tweet() {
         Toast.makeText(this, "Now sending", Toast.LENGTH_SHORT).show();
+        boolean wasTweetSent = true;
 
         try {
             new SendTweet().execute(etTweet.getText().toString());
         }catch (Exception e){
             e.printStackTrace();
+            wasTweetSent = false;
         }
 
-        Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
+        if (wasTweetSent){
+            clearOutEtTweet();
+            Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(this, "Something is wrong...", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private ConfigurationBuilder setTwitterKeysAndTokens(){
@@ -233,5 +264,3 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         }
     }//END LoginTwitter
 }
-
-
