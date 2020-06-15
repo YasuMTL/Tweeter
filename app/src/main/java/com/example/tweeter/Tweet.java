@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,8 +15,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -30,8 +29,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.ArrayList;
 
 import twitter4j.StatusUpdate;
@@ -47,8 +44,7 @@ import twitter4j.conf.ConfigurationContext;
 
 public class Tweet extends AppCompatActivity implements View.OnClickListener
 {
-    Button btnTweet, btnLogin, btnLogout, btnClear, btnUploadPhoto;
-    EditText etTweet;
+    private EditText etTweet;
     // Login
     static OAuthAuthorization mOauth;
     static RequestToken mRequest;
@@ -56,13 +52,11 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             oAuthConsumerSecret,
             oAuthAccessToken,
             oAuthAccessTokenSecret;
-    private boolean didILogIn;
     private SharedPreferences spTwitterToken;
     private SharedPreferences.Editor editorTwitterToken;
     final int RESULT_LOAD_IMAGE = 1;
-    private File imageToUpload;
     final int PERMISSION_REQUEST_CODE = 777;
-    ArrayList<String> imagesPathList;
+    private ArrayList<String> imagesPathList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -70,11 +64,11 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tweet);
 
-        btnTweet = findViewById(R.id.btnSendTweet);
-        btnLogin = findViewById(R.id.btnLogin);
-        btnLogout = findViewById(R.id.btnLogOut);
-        btnClear = findViewById(R.id.btnClear);
-        btnUploadPhoto = findViewById(R.id.btnUploadPhoto);
+        Button btnTweet = findViewById(R.id.btnSendTweet),
+                btnLogin = findViewById(R.id.btnLogin),
+                btnLogout = findViewById(R.id.btnLogOut),
+                btnClear = findViewById(R.id.btnClear),
+                btnUploadPhoto = findViewById(R.id.btnUploadPhoto);
         etTweet = findViewById(R.id.etTweet);
 
         btnTweet.setOnClickListener(this);
@@ -84,7 +78,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         btnUploadPhoto.setOnClickListener(this);
 
         spTwitterToken = getSharedPreferences("twitterToken", MODE_PRIVATE);
-        didILogIn = spTwitterToken.getBoolean("login", false);
+        boolean didILogIn = spTwitterToken.getBoolean("login", false);
 
         if (didILogIn){
             btnLogin.setVisibility(View.INVISIBLE);
@@ -169,7 +163,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 break;
 
             case R.id.btnClear:
-                etTweet.setText("");
+                clearOutEtTweet();
                 break;
 
             case R.id.btnUploadPhoto:
@@ -184,33 +178,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         photoPickerIntent.setType("image/*");
         photoPickerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(photoPickerIntent, RESULT_LOAD_IMAGE);
+//        startActivityForResult(photoPickerIntent, RESULT_LOAD_IMAGE);
+        startActivityForResult(Intent.createChooser(photoPickerIntent, "Select Image"), RESULT_LOAD_IMAGE);
     }
-
-    /*private String getPath(Context context, Uri uri) {
-        String[] proj = {
-                MediaStore.Images.Media.DATA,
-                MediaStore.Images.Media.MIME_TYPE,
-                MediaStore.Images.Media.DISPLAY_NAME
-        };
-
-        String result = null,
-                mime = null,
-                name = null;
-
-        Cursor cursor = context.getContentResolver().query(uri, proj, null, null, null);
-
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                result = cursor.getString(0);
-                mime = cursor.getString(1);
-                name = cursor.getString(2);
-            }
-            cursor.close();
-        }
-
-        return result;
-    }//END getPath*/
 
     public String getPathFromUri(final Context context, final Uri uri) {
         boolean isAfterKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
@@ -281,39 +251,41 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == RESULT_OK){
-            switch (requestCode){
-                case RESULT_LOAD_IMAGE:
-                    try{
-                        imagesPathList = new ArrayList<String>();
+            try {
+                if (requestCode == RESULT_LOAD_IMAGE) {
+                    imagesPathList = new ArrayList<String>();
 
-                        System.out.println("++data" + data.getClipData().getItemCount());// Get count of image here.
+                    if (null != data){
+                        if (data.getData() != null) {
+                            //When an image is picked
+                            Uri mImageUri = data.getData();
+                            String imagePath = getPathFromUri(this, mImageUri);
+                            imagesPathList.add(imagePath);
+                        } else {
+                            //When multiple images are picked
+                            if (data.getClipData() != null) {
+                                System.out.println("++data" + data.getClipData().getItemCount());// Get count of image here.
 
-                        for (int i=0; i<data.getClipData().getItemCount(); i++){
-                            Uri selectedImage = data.getClipData().getItemAt(i).getUri();
-                            //String type list which contains file path of each selected image file
-                            imagesPathList.add(getPathFromUri(Tweet.this, selectedImage));
-                            System.out.println("selectedImage: " + selectedImage);
+                                for (int i = 0; i < data.getClipData().getItemCount(); i++) {
+                                    Uri selectedImage = data.getClipData().getItemAt(i).getUri();
+                                    //String type list which contains file path of each selected image file
+                                    imagesPathList.add(getPathFromUri(Tweet.this, selectedImage));
+                                    System.out.println("selectedImage: " + selectedImage);
+                                }
+                            }
                         }
 
-                        /*String[] filePathColumn = {MediaStore.Images.Media.DATA};
-                        Cursor cursor = getContentResolver().query(imageUri, filePathColumn, null, null, null);
-                        cursor.moveToFirst();
-
-                        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                        String imagePath = cursor.getString(columnIndex);
-                        cursor.close();*/
-
-                    }catch (Exception e){
-                        e.printStackTrace();
-                        Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show();
+                        System.out.println("data.getData(): " + data.getData());
+                    }else{
+                        Toast.makeText(this, "You haven't picked image from gallery", Toast.LENGTH_SHORT).show();
                     }
-                    break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show();
             }
-
-        }else{
-            Toast.makeText(this, "You haven't picked image from gallery", Toast.LENGTH_SHORT).show();
         }
-    }
+    }//END onActivityResult()
 
     private boolean checkPermission() {
 
@@ -322,7 +294,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         if (result == PackageManager.PERMISSION_GRANTED)
         {
             //Toast.makeText(this, "You are uploading an image...", Toast.LENGTH_SHORT).show();
-            System.out.println("You are uploading an image...");
+            System.out.println("You are uploading image(s)...");
             return true;
         }
         // Permission denied
@@ -410,7 +382,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         }
 
         if (wasTweetSent){
-            //clearOutEtTweet();
+            clearOutEtTweet();
             Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
         }else{
             Toast.makeText(this, "Something is wrong...", Toast.LENGTH_SHORT).show();
@@ -430,6 +402,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     //1st inner AsyncTask class
+    @SuppressLint("StaticFieldLeak")
     class SendTweet extends AsyncTask<String, Integer, Integer>
     {
         final String TAG = "SendTweet";
@@ -440,19 +413,20 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             try
             {
                 ConfigurationBuilder cb = setTwitterKeysAndTokens();
-//                TwitterFactory twitterFactory = new TwitterFactory(cb.build());
                 Twitter twitter = new TwitterFactory(cb.build()).getInstance();
-                //twitterFactory.getInstance().updateStatus(tweetText[0]);
+                boolean uploadedMoreThan4Images = false;
 
                 //set text
                 final StatusUpdate status = new StatusUpdate(tweetText[0]);
+
                 //image set
-                if (imagesPathList.size() > 1){
+                if(imagesPathList.size() > 4){
+                    uploadedMoreThan4Images = true;
+                }else if (imagesPathList.size() > 1){
                     System.out.println("Uploading more than one image...");
                     //upload multiple image files (4 files at maximum)
                     long[] mediaIds = new long[imagesPathList.size()];
                     for (int i = 0; i < mediaIds.length; i++){
-//                        UploadedMedia media = twitter.uploadMedia(new File(imagesPathList.get(i) + ".jpg"));
                         System.out.println("imagesPathList.get(i): " + imagesPathList.get(i));
                         UploadedMedia media = twitter.uploadMedia(new File(imagesPathList.get(i)));
                         mediaIds[i] = media.getMediaId();
@@ -467,16 +441,12 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     System.out.println("Uploading nothing...");
                     status.media(null);
                 }
-                /*if (imageToUpload.exists()){
-                    status.media(imageToUpload);
-                }else{
-                    status.media(null);
-                }*/
+
                 //send tweet
-                if (checkPermission()) {
-                    //twitterFactory.getInstance().updateStatus(status);
+                if (uploadedMoreThan4Images){
+                    System.out.println("You cannot upload more than 4 images.");
+                }else if (checkPermission()) {
                     twitter.updateStatus(status);
-//                    clearOutEtTweet();
                 }else{
                     Log.d("PERMISSION", "Permission denied");
                 }
