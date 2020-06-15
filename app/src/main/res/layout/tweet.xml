@@ -77,4 +77,15 @@
         app:layout_constraintHorizontal_bias="0.481"
         app:layout_constraintStart_toEndOf="@+id/btnSendTweet" />
 
+    <Button
+        android:id="@+id/btnUploadVideo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:text="Video"
+        app:layout_constraintBottom_toTopOf="@+id/btnUploadPhoto"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
