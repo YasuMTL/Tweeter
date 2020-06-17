@@ -100,6 +100,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnUploadPhoto.setVisibility(View.INVISIBLE);
         }
 
+        imagesPathList = new ArrayList<String>();
+
         mOauth = new OAuthAuthorization(ConfigurationContext.getInstance());
         getTwitterKeysAndTokens();
     }
@@ -271,8 +273,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         if (resultCode == RESULT_OK){
             try {
                 if (requestCode == RESULT_LOAD_IMAGE) {
-                    imagesPathList = new ArrayList<String>();
-
                     if (null != data){
                         if (data.getData() != null) {
                             //When an image is picked
