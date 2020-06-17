@@ -446,7 +446,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             {
                 ConfigurationBuilder cb = setTwitterKeysAndTokens();
                 Twitter twitter = new TwitterFactory(cb.build()).getInstance();
-                boolean uploadedMoreThan4Images = false;
+                boolean uploadedMoreThan4Images = false,
+                        isVideoTooLarge = false;
 
                 //set text
                 final StatusUpdate status = new StatusUpdate(tweetText[0]);
@@ -454,19 +455,33 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 //set video
                 if (selectedvideoPath != null){
 
-                    // https://ja.stackoverflow.com/questions/28169/android%E3%81%8B%E3%82%89-twitter4j-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%A6%E5%8B%95%E7%94%BB%E3%82%92%E6%8A%95%E7%A8%BF%E3%82%92%E3%81%97%E3%81%9F%E3%81%84
-                    FileInputStream is = null;
-                    //String path = Environment.getExternalStorageDirectory().toString() + "/video.mp4";
-                    File file = new File(selectedvideoPath);
-                    is = new FileInputStream(file);
-                    UploadedMedia video = twitter.uploadMediaChunked("video.mp4", is);
+                    try{
+                        // https://ja.stackoverflow.com/questions/28169/android%E3%81%8B%E3%82%89-twitter4j-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%A6%E5%8B%95%E7%94%BB%E3%82%92%E6%8A%95%E7%A8%BF%E3%82%92%E3%81%97%E3%81%9F%E3%81%84
+                        FileInputStream is = null;
+                        //String path = Environment.getExternalStorageDirectory().toString() + "/video.mp4";
+                        File file = new File(selectedvideoPath);
+                        is = new FileInputStream(file);
+                        UploadedMedia video = twitter.uploadMediaChunked("video.mp4", is);
+                        //https://github.com/Twitter4J/Twitter4J/issues/339
 
-                    status.setMediaIds(video.getMediaId());
-                    System.out.println("Uploading a video...");
+                        status.setMediaIds(video.getMediaId());
+                        System.out.println("Uploading a video...");
+                    }catch(OutOfMemoryError e){
+                        e.printStackTrace();
+                        isVideoTooLarge = true;
+                    }catch(FileNotFoundException e){
+                        e.printStackTrace();
+                    }
+
+                    //Remove the video once it was uploaded
+                    selectedvideoPath = null;
                 }
                 //Image set
                 else if(imagesPathList.size() > 4){
                     uploadedMoreThan4Images = true;
+                    //empty the list
+                    imagesPathList.clear();
+                    selectedvideoPath = null;
                 }else if (imagesPathList.size() > 1){
                     System.out.println("Uploading more than one image...");
                     //upload multiple image files (4 files at maximum)
@@ -478,18 +493,28 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     }
 
                     status.setMediaIds(mediaIds);
+
+                    //empty the list
+                    imagesPathList.clear();
                 }else if (imagesPathList.size() == 1){
                     System.out.println("Uploading a single image...");
                     //upload one image file
-                    status.media(new File(imagesPathList.get(0)));
+                    status.setMedia(new File(imagesPathList.get(0)));
+                    //empty the list
+                    imagesPathList.clear();
                 }else{
                     System.out.println("Uploading nothing...");
-                    status.media(null);
+                    status.setMedia(null);
+                    //empty the list
+                    imagesPathList.clear();
+                    selectedvideoPath = null;
                 }
 
                 //send tweet
                 if (uploadedMoreThan4Images){
                     System.out.println("You cannot upload more than 4 images.");
+                }else if (isVideoTooLarge){
+                    System.out.println("The video you uploaded is too large! Less than 27 seconds video should be uploaded without problem...");
                 }else if (checkPermission()) {
                     twitter.updateStatus(status);
                 }else{
@@ -500,10 +525,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             {
                 te.printStackTrace();
                 Log.d(TAG, te.toString());
-            }
-            catch(FileNotFoundException e){
-                e.printStackTrace();
-                Log.d(TAG, e.toString());
             }
 
             return null;
