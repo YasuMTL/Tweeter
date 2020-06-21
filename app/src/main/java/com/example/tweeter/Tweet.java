@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,6 +30,9 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import twitter4j.StatusUpdate;
@@ -56,7 +60,10 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     private SharedPreferences.Editor editorTwitterToken;
     final int RESULT_LOAD_IMAGE = 1;
     final int PERMISSION_REQUEST_CODE = 777;
+    final int RESULT_LOAD_VIDEO = 2;
     private ArrayList<String> imagesPathList;
+    private String selectedVideoPath;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -68,7 +75,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 btnLogin = findViewById(R.id.btnLogin),
                 btnLogout = findViewById(R.id.btnLogOut),
                 btnClear = findViewById(R.id.btnClear),
-                btnUploadPhoto = findViewById(R.id.btnUploadPhoto);
+                btnUploadPhoto = findViewById(R.id.btnUploadPhoto),
+                btnUploadVideo = findViewById(R.id.btnUploadVideo);
         etTweet = findViewById(R.id.etTweet);
 
         btnTweet.setOnClickListener(this);
@@ -76,6 +84,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         btnLogout.setOnClickListener(this);
         btnClear.setOnClickListener(this);
         btnUploadPhoto.setOnClickListener(this);
+        btnUploadVideo.setOnClickListener(this);
 
         spTwitterToken = getSharedPreferences("twitterToken", MODE_PRIVATE);
         boolean didILogIn = spTwitterToken.getBoolean("login", false);
@@ -93,6 +102,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnClear.setVisibility(View.INVISIBLE);
             btnUploadPhoto.setVisibility(View.INVISIBLE);
         }
+
+        imagesPathList = new ArrayList<String>();
 
         mOauth = new OAuthAuthorization(ConfigurationContext.getInstance());
         getTwitterKeysAndTokens();
@@ -169,7 +180,19 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             case R.id.btnUploadPhoto:
                 uploadPhotos();
                 break;
+
+            case R.id.btnUploadVideo:
+                uploadVideo();
+                System.out.println("uploadVideo()");
+                break;
         }
+    }
+
+    private void uploadVideo(){
+        Intent videoPickerIntent = new Intent();
+        videoPickerIntent.setType("video/*");
+        videoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(videoPickerIntent, "Select Video"), RESULT_LOAD_VIDEO);
     }
 
     private void uploadPhotos(){
@@ -253,8 +276,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         if (resultCode == RESULT_OK){
             try {
                 if (requestCode == RESULT_LOAD_IMAGE) {
-                    imagesPathList = new ArrayList<String>();
-
                     if (null != data){
                         if (data.getData() != null) {
                             //When an image is picked
@@ -278,6 +299,20 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                         System.out.println("data.getData(): " + data.getData());
                     }else{
                         Toast.makeText(this, "You haven't picked image from gallery", Toast.LENGTH_SHORT).show();
+                    }
+                }else if (requestCode == RESULT_LOAD_VIDEO){
+                    Uri selectedImageUri = data.getData();
+
+                    // OI FILE Manager
+                    //String? filemanagerstring = selectedImageUri.getPath();
+
+                    // MEDIA GALLERY
+                    selectedVideoPath = getPathFromUri(this, selectedImageUri);
+
+                    if (selectedVideoPath != null) {
+                        /*Intent intent = new Intent(Tweet.this, VideoplayAvtivity.class);
+                        intent.putExtra("path", selectedImagePath);
+                        startActivity(intent);*/
                     }
                 }
             } catch (Exception e) {
@@ -408,20 +443,74 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         final String TAG = "SendTweet";
 
         @Override
+        protected void onPreExecute() {
+
+            //https://www.youtube.com/watch?v=fg9C2fEE4bY
+            progressDialog = new ProgressDialog(Tweet.this);
+            progressDialog.setCancelable(true);
+            progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progressDialog.setProgressStyle(0);
+            progressDialog.setMax(100);
+            progressDialog.setMessage("Uploading, attendre SVP...");
+
+            // make a button
+            /*progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int which) {
+                    dialogInterface.dismiss();
+                }
+            });*/
+
+            progressDialog.show();
+            super.onPreExecute();
+        }
+
+        @Override
         protected Integer doInBackground(String... tweetText)
         {
             try
             {
                 ConfigurationBuilder cb = setTwitterKeysAndTokens();
                 Twitter twitter = new TwitterFactory(cb.build()).getInstance();
-                boolean uploadedMoreThan4Images = false;
+                boolean uploadedMoreThan4Images = false,
+                        isVideoTooLarge = false;
 
                 //set text
                 final StatusUpdate status = new StatusUpdate(tweetText[0]);
 
-                //image set
-                if(imagesPathList.size() > 4){
+                //set video
+                if (selectedVideoPath != null){
+
+                    try{
+                        // https://ja.stackoverflow.com/questions/28169/android%E3%81%8B%E3%82%89-twitter4j-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%A6%E5%8B%95%E7%94%BB%E3%82%92%E6%8A%95%E7%A8%BF%E3%82%92%E3%81%97%E3%81%9F%E3%81%84
+                        FileInputStream is = null;
+                        //String path = Environment.getExternalStorageDirectory().toString() + "/video.mp4";
+                        File file = new File(selectedVideoPath);
+                        is = new FileInputStream(file);
+                        UploadedMedia video = twitter.uploadMediaChunked("video.mp4", is);
+                        //https://github.com/Twitter4J/Twitter4J/issues/339
+
+                        status.setMediaIds(video.getMediaId());
+                        System.out.println("Uploading a video...");
+                        is.close();
+                    }catch(OutOfMemoryError e){
+                        e.printStackTrace();
+                        isVideoTooLarge = true;
+                    }catch(FileNotFoundException e){
+                        e.printStackTrace();
+                    }catch (IOException e){
+                        e.printStackTrace();
+                    }
+
+                    //Remove the video once it was uploaded
+                    selectedVideoPath = null;
+                }
+                //Image set
+                else if(imagesPathList.size() > 4){
                     uploadedMoreThan4Images = true;
+                    //empty the list
+                    imagesPathList.clear();
+                    selectedVideoPath = null;
                 }else if (imagesPathList.size() > 1){
                     System.out.println("Uploading more than one image...");
                     //upload multiple image files (4 files at maximum)
@@ -433,18 +522,28 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     }
 
                     status.setMediaIds(mediaIds);
+
+                    //empty the list
+                    imagesPathList.clear();
                 }else if (imagesPathList.size() == 1){
                     System.out.println("Uploading a single image...");
                     //upload one image file
-                    status.media(new File(imagesPathList.get(0)));
+                    status.setMedia(new File(imagesPathList.get(0)));
+                    //empty the list
+                    imagesPathList.clear();
                 }else{
                     System.out.println("Uploading nothing...");
-                    status.media(null);
+                    status.setMedia(null);
+                    //empty the list
+                    imagesPathList.clear();
+                    selectedVideoPath = null;
                 }
 
                 //send tweet
                 if (uploadedMoreThan4Images){
                     System.out.println("You cannot upload more than 4 images.");
+                }else if (isVideoTooLarge){
+                    System.out.println("The video you uploaded is too large! Less than 27 seconds video should be uploaded without problem...");
                 }else if (checkPermission()) {
                     twitter.updateStatus(status);
                 }else{
@@ -461,10 +560,17 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         }
 
         @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            progressDialog.setProgress(values[0]);
+        }
+
+        @Override
         protected void onPostExecute(Integer integer)
         {
             super.onPostExecute(integer);
 
+            progressDialog.dismiss();
             System.out.println("Tweet finish !!!");
         }
     }//END SendTweet
