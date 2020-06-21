@@ -95,12 +95,14 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnLogout.setVisibility(View.VISIBLE);
             btnClear.setVisibility(View.VISIBLE);
             btnUploadPhoto.setVisibility(View.VISIBLE);
+            btnUploadVideo.setVisibility(View.VISIBLE);
         }else{
             btnLogin.setVisibility(View.VISIBLE);
             btnTweet.setVisibility(View.INVISIBLE);
             btnLogout.setVisibility(View.INVISIBLE);
             btnClear.setVisibility(View.INVISIBLE);
             btnUploadPhoto.setVisibility(View.INVISIBLE);
+            btnUploadVideo.setVisibility(View.INVISIBLE);
         }
 
         imagesPathList = new ArrayList<String>();
