@@ -63,6 +63,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     final int RESULT_LOAD_IMAGE = 1;
     final int PERMISSION_REQUEST_CODE = 777;
     final int RESULT_LOAD_VIDEO = 2;
+    final int REQUEST_VIDEO_CAPTURE = 3;
     private ArrayList<String> imagesPathList;
     private String selectedVideoPath;
     private ProgressDialog progressDialog;
@@ -78,8 +79,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 btnLogin = findViewById(R.id.btnLogin),
                 btnLogout = findViewById(R.id.btnLogOut),
                 btnClear = findViewById(R.id.btnClear),
-                btnUploadPhoto = findViewById(R.id.btnUploadPhoto),
-                btnUploadVideo = findViewById(R.id.btnUploadVideo);
+                btnUploadPhotoVideo = findViewById(R.id.btnUploadPhoto);
         textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
 
@@ -87,8 +87,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         btnLogin.setOnClickListener(this);
         btnLogout.setOnClickListener(this);
         btnClear.setOnClickListener(this);
-        btnUploadPhoto.setOnClickListener(this);
-        btnUploadVideo.setOnClickListener(this);
+        btnUploadPhotoVideo.setOnClickListener(this);
 
         spTwitterToken = getSharedPreferences("twitterToken", MODE_PRIVATE);
         boolean didILogIn = spTwitterToken.getBoolean("login", false);
@@ -98,16 +97,14 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnTweet.setVisibility(View.VISIBLE);
             btnLogout.setVisibility(View.VISIBLE);
             btnClear.setVisibility(View.VISIBLE);
-            btnUploadPhoto.setVisibility(View.VISIBLE);
-            btnUploadVideo.setVisibility(View.VISIBLE);
+            btnUploadPhotoVideo.setVisibility(View.VISIBLE);
             textInputLayout.setVisibility(View.VISIBLE);
         }else{
             btnLogin.setVisibility(View.VISIBLE);
             btnTweet.setVisibility(View.INVISIBLE);
             btnLogout.setVisibility(View.INVISIBLE);
             btnClear.setVisibility(View.INVISIBLE);
-            btnUploadPhoto.setVisibility(View.INVISIBLE);
-            btnUploadVideo.setVisibility(View.INVISIBLE);
+            btnUploadPhotoVideo.setVisibility(View.INVISIBLE);
             textInputLayout.setVisibility(View.INVISIBLE);
         }
 
@@ -186,15 +183,44 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 break;
 
             case R.id.btnUploadPhoto:
-                uploadPhotos();
+                //uploadPhotos();
+                showOptionMediaDialog();
                 break;
 
-            case R.id.btnUploadVideo:
+            /*case R.id.btnUploadVideo:
                 uploadVideo();
                 System.out.println("uploadVideo()");
-                break;
+                break;*/
         }
     }
+
+    public void showOptionMediaDialog(){
+        String[] mediaOptions = {"Select multiple images", "Select a video", "Take a photo", "Capture a video"};
+
+        new AlertDialog.Builder(this)
+                //.setTitle("What is this permission for?")
+                //.setMessage("You need the permission to upload an image on your tweet.\nPress \"OK\" to get the permission.")
+                .setItems(mediaOptions, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int which) {
+                        switch (which){
+                            case 0://select multiple images
+                                uploadPhotos();
+                                break;
+                            case 1://select a video
+                                uploadVideo();
+                                break;
+                            case 2://take a photo
+                                takeOnePhoto();
+                                break;
+                            case 3://capture a video
+                                captureOneVideo();
+                                break;
+                        }
+                    }
+                })
+                .show();
+    }//END showOptionMediaDialog
 
     private void uploadVideo(){
         Intent videoPickerIntent = new Intent();
@@ -211,6 +237,18 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
 //        startActivityForResult(photoPickerIntent, RESULT_LOAD_IMAGE);
         startActivityForResult(Intent.createChooser(photoPickerIntent, "Select Image"), RESULT_LOAD_IMAGE);
+    }
+
+    private void takeOnePhoto(){
+        Toast.makeText(this, "takeOnePhoto()", Toast.LENGTH_SHORT).show();
+    }
+
+    private void captureOneVideo(){
+        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+
+        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
+        }
     }
 
     public String getPathFromUri(final Context context, final Uri uri) {
@@ -322,6 +360,11 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                         intent.putExtra("path", selectedImagePath);
                         startActivity(intent);*/
                     }
+                }else if (requestCode == REQUEST_VIDEO_CAPTURE){
+                    Uri newVideoUri = data.getData();
+
+                    // MEDIA GALLERY
+                    selectedVideoPath = getPathFromUri(this, newVideoUri);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
