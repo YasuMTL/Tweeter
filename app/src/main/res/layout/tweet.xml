@@ -98,13 +98,6 @@
             android:layout_margin="4dp"
             android:gravity="center|center_horizontal"
             android:text="@string/photo" />
-
-        <Button
-            android:id="@+id/btnUploadVideo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:text="@string/video" />
     </LinearLayout>
 
 </LinearLayout>
