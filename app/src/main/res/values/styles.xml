@@ -10,6 +10,10 @@
     </style>
     <style name="AppTextField" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxBackgroundColor">@android:color/white</item>
+        <item name="android:maxLines">3</item>
+        <item name="android:lines">3</item>
+        <item name="android:singleLine">false</item>
     </style>
+
 
 </resources>
