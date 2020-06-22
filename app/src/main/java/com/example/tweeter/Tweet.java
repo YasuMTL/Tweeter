@@ -29,6 +29,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.material.textfield.TextInputLayout;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -64,6 +66,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     private ArrayList<String> imagesPathList;
     private String selectedVideoPath;
     private ProgressDialog progressDialog;
+    private TextInputLayout textInputLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -77,6 +80,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 btnClear = findViewById(R.id.btnClear),
                 btnUploadPhoto = findViewById(R.id.btnUploadPhoto),
                 btnUploadVideo = findViewById(R.id.btnUploadVideo);
+        textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
 
         btnTweet.setOnClickListener(this);
@@ -96,6 +100,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnClear.setVisibility(View.VISIBLE);
             btnUploadPhoto.setVisibility(View.VISIBLE);
             btnUploadVideo.setVisibility(View.VISIBLE);
+            textInputLayout.setVisibility(View.VISIBLE);
         }else{
             btnLogin.setVisibility(View.VISIBLE);
             btnTweet.setVisibility(View.INVISIBLE);
@@ -103,6 +108,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnClear.setVisibility(View.INVISIBLE);
             btnUploadPhoto.setVisibility(View.INVISIBLE);
             btnUploadVideo.setVisibility(View.INVISIBLE);
+            textInputLayout.setVisibility(View.INVISIBLE);
         }
 
         imagesPathList = new ArrayList<String>();
@@ -408,7 +414,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void tweet() {
-        Toast.makeText(this, "Now sending", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Now sending", Toast.LENGTH_SHORT).show();
         boolean wasTweetSent = true;
 
         try {
@@ -420,9 +426,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
         if (wasTweetSent){
             clearOutEtTweet();
-            Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
         }else{
-            Toast.makeText(this, "Something is wrong...", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Something is wrong...", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -443,6 +449,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     class SendTweet extends AsyncTask<String, Integer, Integer>
     {
         final String TAG = "SendTweet";
+        int statusCode;
 
         @Override
         protected void onPreExecute() {
@@ -548,6 +555,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     System.out.println("The video you uploaded is too large! Less than 27 seconds video should be uploaded without problem...");
                 }else if (checkPermission()) {
                     twitter.updateStatus(status);
+                    statusCode = 200;
                 }else{
                     Log.d("PERMISSION", "Permission denied");
                 }
@@ -556,6 +564,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             {
                 te.printStackTrace();
                 Log.d(TAG, te.toString());
+                System.out.println("te.getStatusCode(): " + te.getStatusCode());
+                statusCode = te.getStatusCode();
             }
 
             return null;
@@ -573,7 +583,15 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             super.onPostExecute(integer);
 
             progressDialog.dismiss();
-            System.out.println("Tweet finish !!!");
+            //System.out.println("Tweet finish !!!");
+            if(statusCode == 200){
+                Toast.makeText(Tweet.this, "Tweet was sent successfully!", Toast.LENGTH_SHORT).show();
+            }else if(statusCode == 503){
+                Toast.makeText(Tweet.this, "Twitter unavailable. Try again later.", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(Tweet.this, "Something wrong...", Toast.LENGTH_SHORT).show();
+            }
+
         }
     }//END SendTweet
 
