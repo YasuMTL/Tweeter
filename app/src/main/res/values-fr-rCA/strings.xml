@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="email">Adresse courriel</string>
+    <string name="password">Mot de passe</string>
+    <string name="photo">Photo/Vidéo</string>
+    <string name="logout">se déconnecter</string>
+    <string name="clear">Vider</string>
+    <string name="video">Vidéo</string>
+    <string name="what_s_happening">Quoi de neuf ?</string>
+    <string name="tweet_sending">Envoi d\'un tweet...</string>
+    <string name="login">s\'identifier</string>
+    <string name="tweet">Tweeter</string>
+</resources>
