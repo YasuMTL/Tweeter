@@ -64,6 +64,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     final int PERMISSION_REQUEST_CODE = 777;
     final int RESULT_LOAD_VIDEO = 2;
     final int REQUEST_VIDEO_CAPTURE = 3;
+    final int REQUEST_TAKE_PHOTO = 4;
     private ArrayList<String> imagesPathList;
     private String selectedVideoPath;
     private ProgressDialog progressDialog;
@@ -186,11 +187,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 //uploadPhotos();
                 showOptionMediaDialog();
                 break;
-
-            /*case R.id.btnUploadVideo:
-                uploadVideo();
-                System.out.println("uploadVideo()");
-                break;*/
         }
     }
 
@@ -240,7 +236,12 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void takeOnePhoto(){
-        Toast.makeText(this, "takeOnePhoto()", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "takeOnePhoto()", Toast.LENGTH_SHORT).show();
+        Intent takeOnePhoto = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        if (takeOnePhoto.resolveActivity(getPackageManager()) != null){
+            startActivityForResult(takeOnePhoto, REQUEST_TAKE_PHOTO);
+        }
     }
 
     private void captureOneVideo(){
@@ -365,6 +366,34 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
                     // MEDIA GALLERY
                     selectedVideoPath = getPathFromUri(this, newVideoUri);
+                }else if (requestCode == REQUEST_TAKE_PHOTO){
+                    Toast.makeText(this, "You have taken a photo.", Toast.LENGTH_SHORT).show();
+                    if (null != data){
+                        if (data.getData() != null) {
+                            //When an image is taken
+                            Uri mImageUri = data.getData();
+                            String imagePath = getPathFromUri(this, mImageUri);
+                            imagesPathList.add(imagePath);
+                        }
+                        // Probably delete this "else" clause
+                        else {
+                            //When multiple images are picked
+                            if (data.getClipData() != null) {
+                                System.out.println("++data" + data.getClipData().getItemCount());// Get count of image here.
+
+                                for (int i = 0; i < data.getClipData().getItemCount(); i++) {
+                                    Uri selectedImage = data.getClipData().getItemAt(i).getUri();
+                                    //String type list which contains file path of each selected image file
+                                    imagesPathList.add(getPathFromUri(Tweet.this, selectedImage));
+                                    System.out.println("selectedImage: " + selectedImage);
+                                }
+                            }
+                        }
+
+                        System.out.println("data.getData(): " + data.getData());
+                    }else{
+                        Toast.makeText(this, "You couldn't take photo for some reason...", Toast.LENGTH_SHORT).show();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -492,7 +521,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     class SendTweet extends AsyncTask<String, Integer, Integer>
     {
         final String TAG = "SendTweet";
-        int statusCode;
+        int statusCode, errorCode;
 
         @Override
         protected void onPreExecute() {
@@ -503,7 +532,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setProgressStyle(0);
             progressDialog.setMax(100);
-            progressDialog.setMessage("Uploading, attendre SVP...");
+            //progressDialog.setMessage("Uploading, attendre SVP...");
+            progressDialog.setMessage(getString(R.string.tweet_sending));
 
             // make a button
             /*progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "", new DialogInterface.OnClickListener() {
@@ -608,7 +638,11 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 te.printStackTrace();
                 Log.d(TAG, te.toString());
                 System.out.println("te.getStatusCode(): " + te.getStatusCode());
+                System.out.println("te.getMessage(): " + te.getMessage());
+                System.out.println("te.getErrorCode(): " + te.getErrorCode());
+                System.out.println("te.getErrorMessage(): " + te.getErrorMessage());
                 statusCode = te.getStatusCode();
+                errorCode = te.getErrorCode();
             }
 
             return null;
@@ -626,11 +660,20 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             super.onPostExecute(integer);
 
             progressDialog.dismiss();
-            //System.out.println("Tweet finish !!!");
+            //Handling error
             if(statusCode == 200){
                 Toast.makeText(Tweet.this, "Tweet was sent successfully!", Toast.LENGTH_SHORT).show();
             }else if(statusCode == 503){
                 Toast.makeText(Tweet.this, "Twitter unavailable. Try again later.", Toast.LENGTH_SHORT).show();
+            }else if (statusCode == 403){
+                switch (errorCode){
+                    case 170:
+                        Toast.makeText(Tweet.this, "You didn't write any text!", Toast.LENGTH_SHORT).show();
+                        break;
+
+                    default:
+                }
+
             }else{
                 Toast.makeText(Tweet.this, "Something wrong...", Toast.LENGTH_SHORT).show();
             }
