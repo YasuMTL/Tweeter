@@ -1,15 +1,19 @@
 package com.example.tweeter;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -35,7 +39,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
@@ -63,10 +70,15 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     final int RESULT_LOAD_IMAGE = 1;
     final int PERMISSION_REQUEST_CODE = 777;
     final int RESULT_LOAD_VIDEO = 2;
+    final int REQUEST_VIDEO_CAPTURE = 3;
+    final int REQUEST_TAKE_PHOTO = 4;
+    private final static int REQUEST_PERMISSION = 1002;
     private ArrayList<String> imagesPathList;
     private String selectedVideoPath;
     private ProgressDialog progressDialog;
     private TextInputLayout textInputLayout;
+    private Uri mCapturedImageURI;
+    private File cameraFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -78,8 +90,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 btnLogin = findViewById(R.id.btnLogin),
                 btnLogout = findViewById(R.id.btnLogOut),
                 btnClear = findViewById(R.id.btnClear),
-                btnUploadPhoto = findViewById(R.id.btnUploadPhoto),
-                btnUploadVideo = findViewById(R.id.btnUploadVideo);
+                btnUploadPhotoVideo = findViewById(R.id.btnUploadPhotoVideo);
         textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
 
@@ -87,8 +98,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         btnLogin.setOnClickListener(this);
         btnLogout.setOnClickListener(this);
         btnClear.setOnClickListener(this);
-        btnUploadPhoto.setOnClickListener(this);
-        btnUploadVideo.setOnClickListener(this);
+        btnUploadPhotoVideo.setOnClickListener(this);
 
         spTwitterToken = getSharedPreferences("twitterToken", MODE_PRIVATE);
         boolean didILogIn = spTwitterToken.getBoolean("login", false);
@@ -98,16 +108,14 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnTweet.setVisibility(View.VISIBLE);
             btnLogout.setVisibility(View.VISIBLE);
             btnClear.setVisibility(View.VISIBLE);
-            btnUploadPhoto.setVisibility(View.VISIBLE);
-            btnUploadVideo.setVisibility(View.VISIBLE);
+            btnUploadPhotoVideo.setVisibility(View.VISIBLE);
             textInputLayout.setVisibility(View.VISIBLE);
         }else{
             btnLogin.setVisibility(View.VISIBLE);
             btnTweet.setVisibility(View.INVISIBLE);
             btnLogout.setVisibility(View.INVISIBLE);
             btnClear.setVisibility(View.INVISIBLE);
-            btnUploadPhoto.setVisibility(View.INVISIBLE);
-            btnUploadVideo.setVisibility(View.INVISIBLE);
+            btnUploadPhotoVideo.setVisibility(View.INVISIBLE);
             textInputLayout.setVisibility(View.INVISIBLE);
         }
 
@@ -185,16 +193,40 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 clearOutEtTweet();
                 break;
 
-            case R.id.btnUploadPhoto:
-                uploadPhotos();
-                break;
-
-            case R.id.btnUploadVideo:
-                uploadVideo();
-                System.out.println("uploadVideo()");
+            case R.id.btnUploadPhotoVideo:
+                //uploadPhotos();
+                showOptionMediaDialog();
                 break;
         }
     }
+
+    public void showOptionMediaDialog(){
+        String[] mediaOptions = {"Select image(s)", "Select a video", "Capture a photo", "Capture a video"};
+
+        new AlertDialog.Builder(this)
+                //.setTitle("What is this permission for?")
+                //.setMessage("You need the permission to upload an image on your tweet.\nPress \"OK\" to get the permission.")
+                .setItems(mediaOptions, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int which) {
+                        switch (which){
+                            case 0://select images
+                                uploadPhotos();
+                                break;
+                            case 1://select a video
+                                uploadVideo();
+                                break;
+                            case 2://take a photo
+                                checkPermissionToTakePhoto();
+                                break;
+                            case 3://capture a video
+                                captureOneVideo();
+                                break;
+                        }
+                    }
+                })
+                .show();
+    }//END showOptionMediaDialog
 
     private void uploadVideo(){
         Intent videoPickerIntent = new Intent();
@@ -204,13 +236,45 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void uploadPhotos(){
-        //Intent photoPickerIntent = new Intent(Intent.ACTION_PICK);
         Intent photoPickerIntent = new Intent();
         photoPickerIntent.setType("image/*");
         photoPickerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
-//        startActivityForResult(photoPickerIntent, RESULT_LOAD_IMAGE);
         startActivityForResult(Intent.createChooser(photoPickerIntent, "Select Image"), RESULT_LOAD_IMAGE);
+    }
+
+    private void takeOnePhoto(){
+        // Determine a folder to save the captured image
+        File cFolder = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);//DIRECTORY_DCIM
+
+        String fileDate = new SimpleDateFormat(
+                //"ddHHmmss", Locale.US).format(new Date());
+                "ddHHmmss", Locale.getDefault()).format(new Date());
+
+        String fileName = String.format("CameraIntent_%s.jpg", fileDate);
+
+        cameraFile = new File(cFolder, fileName);
+
+        // This is not very useful so far...
+        mCapturedImageURI = FileProvider.getUriForFile(
+                Tweet.this,
+                getApplicationContext().getPackageName() + ".fileprovider",
+                cameraFile);
+
+        Intent takeOnePhoto = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        takeOnePhoto.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI);
+
+        if (takeOnePhoto.resolveActivity(getPackageManager()) != null){
+            startActivityForResult(takeOnePhoto, REQUEST_TAKE_PHOTO);
+        }
+    }
+
+    private void captureOneVideo(){
+        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+
+        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
+        }
     }
 
     public String getPathFromUri(final Context context, final Uri uri) {
@@ -277,6 +341,16 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         return null;
     }
 
+    // register the captured image to the Android's database
+    private void registerDatabase(File file) {
+        ContentValues contentValues = new ContentValues();
+        ContentResolver contentResolver = Tweet.this.getContentResolver();
+        contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        contentValues.put("_data", file.getAbsolutePath());
+        contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -322,13 +396,99 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                         intent.putExtra("path", selectedImagePath);
                         startActivity(intent);*/
                     }
+                }else if (requestCode == REQUEST_VIDEO_CAPTURE){
+                    Uri newVideoUri = data.getData();
+
+                    // MEDIA GALLERY
+                    selectedVideoPath = getPathFromUri(this, newVideoUri);
+                }else if (requestCode == REQUEST_TAKE_PHOTO){
+                    Toast.makeText(this, "You have taken a photo.", Toast.LENGTH_SHORT).show();
+
+                    if (cameraFile != null){
+                        //registerDatabase(cameraFile);
+                        System.out.println("cameraFile: " + cameraFile);
+                        System.out.println("cameraFile.getAbsolutePath(): " + cameraFile.getAbsolutePath());
+
+                        System.out.println("mCapturedImageURI: " + mCapturedImageURI);
+                        System.out.println("mCapturedImageURI.getAuthority(): " + mCapturedImageURI.getAuthority());
+
+                        String imagePath = cameraFile.getAbsolutePath();
+
+                        imagesPathList.add(imagePath);
+                    }else{
+                        Toast.makeText(this, "You couldn't take photo for some reason...", Toast.LENGTH_SHORT).show();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Something went wrong. Report to the author of this app about what you had done so far.", Toast.LENGTH_SHORT).show();
             }
         }
     }//END onActivityResult()
+
+    // Runtime Permission check
+    private void checkPermissionToTakePhoto(){
+        // Two permissions are already granted
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
+
+            takeOnePhoto();
+        }
+        // One permission (WRITE_EXTERNAL_STORAGE) is not yet granted
+        else if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                PackageManager.PERMISSION_GRANTED){
+
+            requestPermissionExternalStorage();
+        }
+        // One permission (CAMERA) is not yet granted
+        else if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+
+            requestPermissionCamera();
+        }
+    }
+
+    private void requestPermissionExternalStorage() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            ActivityCompat.requestPermissions(Tweet.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_PERMISSION);
+
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,},
+                    REQUEST_PERMISSION);
+            Toast toast = Toast.makeText(this,
+                    "You need permission to access to the external storage.",
+                    Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
+
+    private void requestPermissionCamera() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.CAMERA)) {
+            ActivityCompat.requestPermissions(Tweet.this,
+                    new String[]{Manifest.permission.CAMERA},
+                    REQUEST_PERMISSION);
+
+        } else {
+
+            ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.CAMERA,},
+                REQUEST_PERMISSION);
+
+            Toast toast = Toast.makeText(this,
+                    "You need permission to use camera.",
+                    Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
 
     private boolean checkPermission() {
 
@@ -354,6 +514,19 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             return false;
         }
     }//END checkPermission()
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_REQUEST_CODE){
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(this, "Permission granted. Now you should be able to take a photo.", Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(this, "You need permission!!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     // After clicking "Yes" on the dialog, you can have a permission request
     public void showInfoDialog(){
@@ -449,7 +622,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     class SendTweet extends AsyncTask<String, Integer, Integer>
     {
         final String TAG = "SendTweet";
-        int statusCode;
+        int statusCode, errorCode;
 
         @Override
         protected void onPreExecute() {
@@ -460,7 +633,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setProgressStyle(0);
             progressDialog.setMax(100);
-            progressDialog.setMessage("Uploading, attendre SVP...");
+            //progressDialog.setMessage("Uploading, attendre SVP...");
+            progressDialog.setMessage(getString(R.string.tweet_sending));
 
             // make a button
             /*progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "", new DialogInterface.OnClickListener() {
@@ -536,6 +710,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     imagesPathList.clear();
                 }else if (imagesPathList.size() == 1){
                     System.out.println("Uploading a single image...");
+                    System.out.println("imagesPathList.get(0): " + imagesPathList.get(0));
                     //upload one image file
                     status.setMedia(new File(imagesPathList.get(0)));
                     //empty the list
@@ -565,7 +740,11 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 te.printStackTrace();
                 Log.d(TAG, te.toString());
                 System.out.println("te.getStatusCode(): " + te.getStatusCode());
+                System.out.println("te.getMessage(): " + te.getMessage());
+                System.out.println("te.getErrorCode(): " + te.getErrorCode());
+                System.out.println("te.getErrorMessage(): " + te.getErrorMessage());
                 statusCode = te.getStatusCode();
+                errorCode = te.getErrorCode();
             }
 
             return null;
@@ -583,11 +762,20 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             super.onPostExecute(integer);
 
             progressDialog.dismiss();
-            //System.out.println("Tweet finish !!!");
+            //Handling error
             if(statusCode == 200){
                 Toast.makeText(Tweet.this, "Tweet was sent successfully!", Toast.LENGTH_SHORT).show();
             }else if(statusCode == 503){
                 Toast.makeText(Tweet.this, "Twitter unavailable. Try again later.", Toast.LENGTH_SHORT).show();
+            }else if (statusCode == 403){
+                switch (errorCode){
+                    case 170:
+                        Toast.makeText(Tweet.this, "You didn't write any text!", Toast.LENGTH_SHORT).show();
+                        break;
+
+                    default:
+                }
+
             }else{
                 Toast.makeText(Tweet.this, "Something wrong...", Toast.LENGTH_SHORT).show();
             }

@@ -1,13 +1,13 @@
 <resources>
-    <string name="app_name">Tweeter</string>
+    <string name="app_name" translatable="false">Tweeter</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="tweet">Tweet</string>
     <string name="photo">Photo/Video</string>
     <string name="logout">LogOut</string>
-    <string name="log_in">Log in</string>
     <string name="login">Login</string>
     <string name="what_s_happening">What\'s happening?</string>
     <string name="clear">Clear</string>
     <string name="video">Video</string>
+    <string name="tweet_sending">Sending tweet...</string>
 </resources>
