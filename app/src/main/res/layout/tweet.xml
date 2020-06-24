@@ -59,7 +59,7 @@
             android:layout_height="120dp"
             android:inputType="textMultiLine"
             android:maxLines="3"
-            app:layout_constraintBottom_toTopOf="@+id/btnUploadPhoto"
+            app:layout_constraintBottom_toTopOf="@+id/btnUploadPhotoVideo"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="1.0"
             tools:layout_editor_absoluteX="7dp" />
@@ -82,6 +82,15 @@
             android:text="@string/tweet" />
 
         <Button
+            android:id="@+id/btnUploadPhotoVideo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|center_horizontal"
+            android:layout_margin="4dp"
+            android:gravity="center|center_horizontal"
+            android:text="@string/photo" />
+
+        <Button
             android:id="@+id/btnClear"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -90,14 +99,6 @@
             android:gravity="center|center_horizontal"
             android:text="@string/clear" />
 
-        <Button
-            android:id="@+id/btnUploadPhoto"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|center_horizontal"
-            android:layout_margin="4dp"
-            android:gravity="center|center_horizontal"
-            android:text="@string/photo" />
     </LinearLayout>
 
 </LinearLayout>
