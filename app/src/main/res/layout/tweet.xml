@@ -8,22 +8,6 @@
     android:orientation="vertical"
     tools:context=".Tweet">
 
-    <!--<EditText
-        android:id="@+id/etTweet"
-        android:layout_width="285dp"
-        android:layout_height="129dp"
-        android:ems="10"
-        android:gravity="start|top"
-        android:hint="@string/what_s_happening"
-        android:importantForAutofill="no"
-        android:inputType="textMultiLine"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.433" />-->
-
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,14 +19,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:text="@string/logout" />
+            android:text="@string/logout"
+            android:drawableLeft="@drawable/sharp_exit_to_app_white_18"
+            style="?android:attr/borderlessButtonStyle" />
 
         <Button
             android:id="@+id/btnLogin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:text="@string/login" />
+            android:text="@string/login"
+            android:drawableLeft="@drawable/sharp_login_white_18"
+            style="?android:attr/borderlessButtonStyle" />
 
     </LinearLayout>
 
@@ -79,7 +67,9 @@
             android:layout_gravity="center|center_horizontal"
             android:layout_margin="4dp"
             android:gravity="center|center_horizontal"
-            android:text="@string/tweet" />
+            android:text="@string/tweet"
+            android:drawableLeft="@drawable/sharp_send_white_18"
+            style="?android:attr/borderlessButtonStyle" />
 
         <Button
             android:id="@+id/btnUploadPhotoVideo"
@@ -88,7 +78,9 @@
             android:layout_gravity="center|center_horizontal"
             android:layout_margin="4dp"
             android:gravity="center|center_horizontal"
-            android:text="@string/photo" />
+            android:text="@string/photo"
+            android:drawableLeft="@drawable/sharp_add_photo_alternate_white_18"
+            style="?android:attr/borderlessButtonStyle" />
 
         <Button
             android:id="@+id/btnClear"
@@ -97,7 +89,9 @@
             android:layout_gravity="center|center_horizontal"
             android:layout_margin="4dp"
             android:gravity="center|center_horizontal"
-            android:text="@string/clear" />
+            android:text="@string/clear"
+            android:drawableLeft="@drawable/sharp_delete_sweep_white_18"
+            style="?android:attr/borderlessButtonStyle" />
 
     </LinearLayout>
 
