@@ -17,7 +17,6 @@ import twitter4j.auth.AccessToken;
 public class ReceiveToken extends AppCompatActivity {
     private Uri uri;
     private AccessToken mToken;
-    private Button btnBackToTweet;
     private String token, tokenSecret;
 
     @Override
@@ -39,7 +38,7 @@ public class ReceiveToken extends AppCompatActivity {
             }
         }//END if
 
-        btnBackToTweet = findViewById(R.id.btnBackToTweet);
+        Button btnBackToTweet = findViewById(R.id.btnBackToTweet);
         btnBackToTweet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
