@@ -31,8 +31,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
@@ -194,14 +196,51 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 break;
 
             case R.id.btnUploadPhotoVideo:
-                //uploadPhotos();
-                checkPermissionToTakePhoto();
+                requestTwoPermissions();
                 showOptionMediaDialog();
                 break;
         }
     }
 
     public void showOptionMediaDialog(){
+        String[] mediaOptions = {"Select image(s)", "Select a video", "Capture a photo", "Capture a video"};
+
+        /*ImageView image = new ImageView(this);
+        image.setImageResource(R.drawable.twitter);*/
+
+        new MaterialAlertDialogBuilder(this)
+                .setItems(mediaOptions, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int which) {
+                        switch (which){
+                            case 0://select images
+                                if (checkPermissionToReadStorage()){
+                                    uploadPhotos();
+                                }
+                                break;
+                            case 1://select a video
+                                if (checkPermissionToReadStorage()){
+                                    uploadVideo();
+                                }
+                                break;
+                            case 2://take a photo
+                                if (checkPermissionToTakePhoto()){
+                                    takeOnePhoto();
+                                }
+                                break;
+                            case 3://capture a video
+                                if (checkPermissionToTakePhoto()){
+                                    captureOneVideo();
+                                }
+                                break;
+                        }
+                    }
+                })
+                //.setView(image)
+                .show();
+    }
+
+    /*public void showOptionMediaDialog(){
         String[] mediaOptions = {"Select image(s)", "Select a video", "Capture a photo", "Capture a video"};
 
         new AlertDialog.Builder(this)
@@ -212,24 +251,30 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     public void onClick(DialogInterface dialogInterface, int which) {
                         switch (which){
                             case 0://select images
-                                checkPermission();
-                                uploadPhotos();
+                                if (checkPermissionToReadStorage()){
+                                    uploadPhotos();
+                                }
                                 break;
                             case 1://select a video
-                                uploadVideo();
+                                if (checkPermissionToReadStorage()){
+                                    uploadVideo();
+                                }
                                 break;
                             case 2://take a photo
-//                                checkPermissionToTakePhoto();
-                                takeOnePhoto();
+                                if (checkPermissionToTakePhoto()){
+                                    takeOnePhoto();
+                                }
                                 break;
                             case 3://capture a video
-                                captureOneVideo();
+                                if (checkPermissionToTakePhoto()){
+                                    captureOneVideo();
+                                }
                                 break;
                         }
                     }
                 })
                 .show();
-    }//END showOptionMediaDialog
+    }//END showOptionMediaDialog*/
 
     private void uploadVideo(){
         Intent videoPickerIntent = new Intent();
@@ -344,16 +389,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         return null;
     }
 
-    // register the captured image to the Android's database
-    private void registerDatabase(File file) {
-        ContentValues contentValues = new ContentValues();
-        ContentResolver contentResolver = Tweet.this.getContentResolver();
-        contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-        contentValues.put("_data", file.getAbsolutePath());
-        contentResolver.insert(
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues);
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -387,9 +422,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     }
                 }else if (requestCode == RESULT_LOAD_VIDEO){
                     Uri selectedImageUri = data.getData();
-
-                    // OI FILE Manager
-                    //String? filemanagerstring = selectedImageUri.getPath();
 
                     // MEDIA GALLERY
                     selectedVideoPath = getPathFromUri(this, selectedImageUri);
@@ -430,65 +462,61 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }//END onActivityResult()
 
     // Runtime Permission check
-    private void checkPermissionToTakePhoto(){
+    private void requestTwoPermissions(){
         // Two permissions are already granted
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE) ==
-                PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
-            //No operation to execute so far...
-        }
-        else
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
         {
             ActivityCompat.requestPermissions(Tweet.this,
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
-                                Manifest.permission.CAMERA},
-                    PERMISSION_REQUEST_CODE);
+                                Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
         }
     }
 
-    private void requestPermissionCamera() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.CAMERA)) {
-            ActivityCompat.requestPermissions(Tweet.this,
-                    new String[]{Manifest.permission.CAMERA},
-                    PERMISSION_REQUEST_CODE);
+    // Runtime Permission check
+    private boolean checkPermissionToTakePhoto(){
 
-        } else {
+        int checkPermissionCamera = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA);
+        String whichPermission = "camera";
 
-            ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.CAMERA},
-                    PERMISSION_REQUEST_CODE);
-
-            Toast toast = Toast.makeText(this,
-                    getString(R.string.permission_camera),
-                    Toast.LENGTH_SHORT);
-            toast.show();
+        if (checkPermissionCamera == PackageManager.PERMISSION_GRANTED)
+        {
+            return true;
+        }
+        // Permission denied
+        else
+        {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)){
+                // User can get the permission via this dialog
+                showInfoDialog(whichPermission);
+            }else{
+                // User cannot send an email anymore unless getting the permission manually in "App setting"
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
+            }
+            return false;
         }
     }
 
-    private void checkPermission() {
+    private boolean checkPermissionToReadStorage() {
 
         int result = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
+        String whichPermission = "read";
 
         if (result == PackageManager.PERMISSION_GRANTED)
         {
-            System.out.println("Permission granted");
-            //return true;
+            return true;
         }
         // Permission denied
         else
         {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)){
                 // User can get the permission via this dialog
-                showInfoDialog();
+                showInfoDialog(whichPermission);
             }else{
                 // User cannot send an email anymore unless getting the permission manually in "App setting"
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
             }
-
-            //return false;
+            return false;
         }
     }//END checkPermission()
 
@@ -498,7 +526,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
         if (requestCode == PERMISSION_REQUEST_CODE){
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT).show();
             }else{
                 Toast.makeText(this, getString(R.string.need_permission), Toast.LENGTH_SHORT).show();
             }
@@ -506,30 +534,58 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     // After clicking "Yes" on the dialog, you can have a permission request
-    public void showInfoDialog(){
-        new AlertDialog.Builder(this)
-                .setTitle("Permission to attach photos and video")
-                .setMessage("You need the permissions to attach images or video on your tweet.\nPress \"OK\" to get the permissions.")
-                .setPositiveButton(
-                        "OK",
-                        new DialogInterface.OnClickListener(){
-                            @Override
-                            public void onClick(DialogInterface dialog, int which){
-                                ActivityCompat.requestPermissions(Tweet.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
+    public void showInfoDialog(String whichPermission){
+        if (whichPermission.equals("camera")){
+            new AlertDialog.Builder(this)
+                    //.setTitle("Permission to attach photos and video")
+                    .setMessage("To attach images or video on your tweet, press \"OK\" to get the permissions.")
+                    .setPositiveButton(
+                            "OK",
+                            new DialogInterface.OnClickListener(){
+                                @Override
+                                public void onClick(DialogInterface dialog, int which){
+                                    ActivityCompat.requestPermissions(Tweet.this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
+                                }
                             }
-                        }
-                )
-                .setNegativeButton(
-                        "NO",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                Toast.makeText(Tweet.this, getString(R.string.warning_no_permission),
-                                        Toast.LENGTH_LONG).show();
+                    )
+                    .setNegativeButton(
+                            "NO",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    Toast.makeText(Tweet.this, getString(R.string.warning_no_permission),
+                                            Toast.LENGTH_LONG).show();
+                                }
                             }
-                        }
-                )
-                .show();
+                    )
+                    .show();
+        }
+        else if (whichPermission.equals("read"))
+        {
+            new AlertDialog.Builder(this)
+                    .setMessage("To attach images or video on your tweet, press \"OK\" to get the permissions.")
+                    .setPositiveButton(
+                            "OK",
+                            new DialogInterface.OnClickListener(){
+                                @Override
+                                public void onClick(DialogInterface dialog, int which){
+                                    ActivityCompat.requestPermissions(Tweet.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+                                }
+                            }
+                    )
+                    .setNegativeButton(
+                            "NO",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    Toast.makeText(Tweet.this, getString(R.string.warning_no_permission),
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            }
+                    )
+                    .show();
+        }
+
     }//END showInfoDialog
 
     private boolean notOverLetterLimit(){
