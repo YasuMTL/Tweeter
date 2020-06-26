@@ -84,14 +84,14 @@
 
         <Button
             android:id="@+id/btnClear"
-            android:layout_width="wrap_content"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="114dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center|center_horizontal"
             android:layout_margin="4dp"
-            android:gravity="center|center_horizontal"
-            android:text="@string/clear"
             android:drawableLeft="@drawable/sharp_delete_sweep_white_18"
-            style="?android:attr/borderlessButtonStyle" />
+            android:gravity="center|center_horizontal"
+            android:text="@string/clear" />
 
     </LinearLayout>
 
