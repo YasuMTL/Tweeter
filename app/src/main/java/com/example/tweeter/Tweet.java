@@ -177,7 +177,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 if (notOverLetterLimit()){
                     tweet();
                 }else{
-                    Toast.makeText(this, "Over 140 letters!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.over140), Toast.LENGTH_SHORT).show();
                 }
 
                 break;
@@ -195,6 +195,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
             case R.id.btnUploadPhotoVideo:
                 //uploadPhotos();
+                checkPermissionToTakePhoto();
                 showOptionMediaDialog();
                 break;
         }
@@ -211,13 +212,15 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     public void onClick(DialogInterface dialogInterface, int which) {
                         switch (which){
                             case 0://select images
+                                checkPermission();
                                 uploadPhotos();
                                 break;
                             case 1://select a video
                                 uploadVideo();
                                 break;
                             case 2://take a photo
-                                checkPermissionToTakePhoto();
+//                                checkPermissionToTakePhoto();
+                                takeOnePhoto();
                                 break;
                             case 3://capture a video
                                 captureOneVideo();
@@ -367,7 +370,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                         } else {
                             //When multiple images are picked
                             if (data.getClipData() != null) {
-                                System.out.println("++data" + data.getClipData().getItemCount());// Get count of image here.
+                                System.out.println("++data: " + data.getClipData().getItemCount());// Get count of image here.
 
                                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                                     Uri selectedImage = data.getClipData().getItemAt(i).getUri();
@@ -380,7 +383,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
                         System.out.println("data.getData(): " + data.getData());
                     }else{
-                        Toast.makeText(this, "You haven't picked image from gallery", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.not_picked_images), Toast.LENGTH_SHORT).show();
                     }
                 }else if (requestCode == RESULT_LOAD_VIDEO){
                     Uri selectedImageUri = data.getData();
@@ -402,7 +405,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     // MEDIA GALLERY
                     selectedVideoPath = getPathFromUri(this, newVideoUri);
                 }else if (requestCode == REQUEST_TAKE_PHOTO){
-                    Toast.makeText(this, "You have taken a photo.", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(this, "You have taken a photo.", Toast.LENGTH_SHORT).show();
 
                     if (cameraFile != null){
                         //registerDatabase(cameraFile);
@@ -416,12 +419,12 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
                         imagesPathList.add(imagePath);
                     }else{
-                        Toast.makeText(this, "You couldn't take photo for some reason...", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.fail_photo), Toast.LENGTH_SHORT).show();
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Something went wrong. Report to the author of this app about what you had done so far.", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();// review translation too (FR and JP)
+                Toast.makeText(this, getString(R.string.attach_fail), Toast.LENGTH_SHORT).show();
             }
         }
     }//END onActivityResult()
@@ -430,43 +433,18 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     private void checkPermissionToTakePhoto(){
         // Two permissions are already granted
         if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                Manifest.permission.READ_EXTERNAL_STORAGE) ==
                 PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
-
-            takeOnePhoto();
+            //No operation to execute so far...
         }
-        // One permission (WRITE_EXTERNAL_STORAGE) is not yet granted
-        else if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
-                PackageManager.PERMISSION_GRANTED){
-
-            requestPermissionExternalStorage();
-        }
-        // One permission (CAMERA) is not yet granted
-        else if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
-
-            requestPermissionCamera();
-        }
-    }
-
-    private void requestPermissionExternalStorage() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        else
+        {
             ActivityCompat.requestPermissions(Tweet.this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_PERMISSION);
-
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,},
-                    REQUEST_PERMISSION);
-            Toast toast = Toast.makeText(this,
-                    "You need permission to access to the external storage.",
-                    Toast.LENGTH_SHORT);
-            toast.show();
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,
+                                Manifest.permission.CAMERA},
+                    PERMISSION_REQUEST_CODE);
         }
     }
 
@@ -475,30 +453,29 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 Manifest.permission.CAMERA)) {
             ActivityCompat.requestPermissions(Tweet.this,
                     new String[]{Manifest.permission.CAMERA},
-                    REQUEST_PERMISSION);
+                    PERMISSION_REQUEST_CODE);
 
         } else {
 
             ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.CAMERA,},
-                REQUEST_PERMISSION);
+                new String[]{Manifest.permission.CAMERA},
+                    PERMISSION_REQUEST_CODE);
 
             Toast toast = Toast.makeText(this,
-                    "You need permission to use camera.",
+                    getString(R.string.permission_camera),
                     Toast.LENGTH_SHORT);
             toast.show();
         }
     }
 
-    private boolean checkPermission() {
+    private void checkPermission() {
 
         int result = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
 
         if (result == PackageManager.PERMISSION_GRANTED)
         {
-            //Toast.makeText(this, "You are uploading an image...", Toast.LENGTH_SHORT).show();
-            System.out.println("You are uploading image(s)...");
-            return true;
+            System.out.println("Permission granted");
+            //return true;
         }
         // Permission denied
         else
@@ -511,7 +488,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
             }
 
-            return false;
+            //return false;
         }
     }//END checkPermission()
 
@@ -521,9 +498,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
         if (requestCode == PERMISSION_REQUEST_CODE){
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                Toast.makeText(this, "Permission granted. Now you should be able to take a photo.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT).show();
             }else{
-                Toast.makeText(this, "You need permission!!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.need_permission), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -531,14 +508,14 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     // After clicking "Yes" on the dialog, you can have a permission request
     public void showInfoDialog(){
         new AlertDialog.Builder(this)
-                .setTitle("What is this permission for?")
-                .setMessage("You need the permission to upload an image on your tweet.\nPress \"OK\" to get the permission.")
+                .setTitle("Permission to attach photos and video")
+                .setMessage("You need the permissions to attach images or video on your tweet.\nPress \"OK\" to get the permissions.")
                 .setPositiveButton(
                         "OK",
                         new DialogInterface.OnClickListener(){
                             @Override
                             public void onClick(DialogInterface dialog, int which){
-                                ActivityCompat.requestPermissions(Tweet.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
+                                ActivityCompat.requestPermissions(Tweet.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
                             }
                         }
                 )
@@ -547,7 +524,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
-                                Toast.makeText(Tweet.this, "Without the permission, you cannot upload an image!",
+                                Toast.makeText(Tweet.this, getString(R.string.warning_no_permission),
                                         Toast.LENGTH_LONG).show();
                             }
                         }
@@ -573,7 +550,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         editorTwitterToken.putString("tokenSecret", null);
         editorTwitterToken.apply();
 
-        Toast.makeText(this, "You have successfully logged out", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(R.string.logout_success), Toast.LENGTH_SHORT).show();
 
         Log.d(TAG, "--------------- END ---------------");
     }
@@ -587,7 +564,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void tweet() {
-        //Toast.makeText(this, "Now sending", Toast.LENGTH_SHORT).show();
         boolean wasTweetSent = true;
 
         try {
@@ -599,9 +575,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
         if (wasTweetSent){
             clearOutEtTweet();
-            //Toast.makeText(this, "Finish", Toast.LENGTH_SHORT).show();
-        }else{
-            //Toast.makeText(this, "Something is wrong...", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -623,6 +596,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     {
         final String TAG = "SendTweet";
         int statusCode, errorCode;
+        boolean uploadedMoreThan4Images = false,
+                isVideoTooLarge = false,
+                didIUploadNothing = false;
 
         @Override
         protected void onPreExecute() {
@@ -633,7 +609,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
             progressDialog.setProgressStyle(0);
             progressDialog.setMax(100);
-            //progressDialog.setMessage("Uploading, attendre SVP...");
             progressDialog.setMessage(getString(R.string.tweet_sending));
 
             // make a button
@@ -655,8 +630,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             {
                 ConfigurationBuilder cb = setTwitterKeysAndTokens();
                 Twitter twitter = new TwitterFactory(cb.build()).getInstance();
-                boolean uploadedMoreThan4Images = false,
-                        isVideoTooLarge = false;
 
                 //set text
                 final StatusUpdate status = new StatusUpdate(tweetText[0]);
@@ -679,8 +652,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     }catch(OutOfMemoryError e){
                         e.printStackTrace();
                         isVideoTooLarge = true;
-                    }catch(FileNotFoundException e){
-                        e.printStackTrace();
                     }catch (IOException e){
                         e.printStackTrace();
                     }
@@ -717,7 +688,10 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     imagesPathList.clear();
                 }else{
                     System.out.println("Uploading nothing...");
+                    didIUploadNothing = true;
+                    System.out.println("BEFORE setMedia");
                     status.setMedia(null);
+                    System.out.println("AFTER setMedia");
                     //empty the list
                     imagesPathList.clear();
                     selectedVideoPath = null;
@@ -728,11 +702,10 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     System.out.println("You cannot upload more than 4 images.");
                 }else if (isVideoTooLarge){
                     System.out.println("The video you uploaded is too large! Less than 27 seconds video should be uploaded without problem...");
-                }else if (checkPermission()) {
+                }else{
                     twitter.updateStatus(status);
                     statusCode = 200;
-                }else{
-                    Log.d("PERMISSION", "Permission denied");
+                    Log.d("TWEET", "The tweet was sent as expected...");
                 }
             }
             catch(TwitterException te)
@@ -764,20 +737,24 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             progressDialog.dismiss();
             //Handling error
             if(statusCode == 200){
-                Toast.makeText(Tweet.this, "Tweet was sent successfully!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(Tweet.this, getString(R.string.tweet_sent_success), Toast.LENGTH_SHORT).show();
             }else if(statusCode == 503){
-                Toast.makeText(Tweet.this, "Twitter unavailable. Try again later.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(Tweet.this, getString(R.string.twitter_unavailable), Toast.LENGTH_SHORT).show();
             }else if (statusCode == 403){
                 switch (errorCode){
                     case 170:
-                        Toast.makeText(Tweet.this, "You didn't write any text!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(Tweet.this, getString(R.string.no_text_to_tweet), Toast.LENGTH_SHORT).show();
                         break;
 
                     default:
                 }
 
+            }else if(statusCode == 400){
+                Toast.makeText(Tweet.this, "The request was invalid. Try again later.", Toast.LENGTH_SHORT).show();
+            }else if (uploadedMoreThan4Images){
+                Toast.makeText(Tweet.this, "You cannot send no more than 4 images!", Toast.LENGTH_SHORT).show();
             }else{
-                Toast.makeText(Tweet.this, "Something wrong...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(Tweet.this, getString(R.string.unknown_error), Toast.LENGTH_SHORT).show();
             }
 
         }
