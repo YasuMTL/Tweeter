@@ -15,12 +15,10 @@
     <string name="over140">Ça dépasse 140 lettres !</string>
     <string name="not_picked_images">Vous n\'avez choisi aucune image de gallery.</string>
     <string name="fail_photo">Vous n\'avez pas réussi à photographier pour une raison unconnue.</string>
-    <string name="attach_fail">Quelque chose qui ne marche pas.</string>
-    <string name="permission_external_storage">Une permission pour accéder au stockage externe est nécessaire.</string>
-    <string name="permission_camera">Une permission pour accéder au caméra est nécessaire.</string>
-    <string name="permission_granted">Permission accordée. Vous pouvez maintenant photographier.</string>
+    <string name="attach_fail">Vous n\'avez pas joint de photo (s) ou de vidéo en raison de l\'absence d\'autorisation.</string>
+    <string name="permission_granted">Vous pouvez photographier ou filmer.</string>
     <string name="need_permission">Vous devez avoir la permission !</string>
-    <string name="warning_no_permission">Vous ne pouvez pas envoyer d\'image ni une vidéo sans la permission.</string>
+    <string name="warning_no_permission">Vous ne pouvez pas joint d\'images ni une vidéo sans les permissions.</string>
     <string name="logout_success">Vous êtes déconnecté.e.</string>
     <string name="tweet_sent_success">Le tweet a été envoyé avec succès !</string>
     <string name="twitter_unavailable">Twitter indisponible. Ressayez plus tard</string>

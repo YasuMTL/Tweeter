@@ -16,11 +16,9 @@
     <string name="not_picked_images">You haven\'t picked image from gallery</string>
     <string name="fail_photo">You couldn\'t take photo for some reason…</string>
     <string name="attach_fail">You failed to attach image(s) or a video due to the lack of permission</string>
-    <string name="permission_external_storage">You need permission to access to the external storage.</string>
-    <string name="permission_camera">You need permission to use camera.</string>
     <string name="permission_granted">You can attach photos or video now.</string>
-    <string name="need_permission">You need permission!!</string>
-    <string name="warning_no_permission">Without the permission, you cannot upload an image!</string>
+    <string name="need_permission">You need permission to attach images or a video!!</string>
+    <string name="warning_no_permission">No permission! You cannot upload an image!</string>
     <string name="logout_success">You have successfully logged out!</string>
     <string name="tweet_sent_success">Tweet was sent !</string>
     <string name="twitter_unavailable">Twitter unavailable. Try again later.</string>

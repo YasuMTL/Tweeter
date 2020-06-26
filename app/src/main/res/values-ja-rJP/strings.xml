@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Tweeter</string>
     <string name="email">メールアドレス</string>
     <string name="password">パスワード</string>
     <string name="tweet">ツイートする</string>
@@ -17,11 +16,9 @@
     <string name="not_picked_images">写真選択を中止しました。</string>
     <string name="fail_photo">何らかの理由で写真撮影に失敗しました。</string>
     <string name="attach_fail">添付に失敗しました。</string>
-    <string name="permission_external_storage">外部ストレージ(external storage)へのアクセス許可が必要です</string>
-    <string name="permission_camera">カメラの使用許可が必要です。</string>
     <string name="permission_granted">許可を得たので、写真撮影が可能になりました。</string>
     <string name="need_permission">許可が必要です！</string>
-    <string name="warning_no_permission">許可がないので、外部ストレージにアクセスできず、画像アップロードもできません。</string>
+    <string name="warning_no_permission">外部ストレージにアクセスできないため画像アップロードができません。設定からアプリの「許可」の確認をして下さい。</string>
     <string name="logout_success">ログアウトしました。</string>
     <string name="tweet_sent_success">ツイートが送信されました。</string>
     <string name="twitter_unavailable">ツイッターが機能していないようです。後でもう一度お試しください。</string>
