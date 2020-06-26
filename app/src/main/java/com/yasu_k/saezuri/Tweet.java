@@ -1,4 +1,4 @@
-package com.example.tweeter;
+package com.yasu_k.saezuri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,9 +11,7 @@ import androidx.core.content.FileProvider;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
-import android.content.ContentResolver;
 import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -31,7 +29,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -39,7 +36,6 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -74,11 +70,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     final int RESULT_LOAD_VIDEO = 2;
     final int REQUEST_VIDEO_CAPTURE = 3;
     final int REQUEST_TAKE_PHOTO = 4;
-    private final static int REQUEST_PERMISSION = 1002;
     private ArrayList<String> imagesPathList;
     private String selectedVideoPath;
     private ProgressDialog progressDialog;
-    private TextInputLayout textInputLayout;
     private Uri mCapturedImageURI;
     private File cameraFile;
 
@@ -93,7 +87,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 btnLogout = findViewById(R.id.btnLogOut),
                 btnClear = findViewById(R.id.btnClear),
                 btnUploadPhotoVideo = findViewById(R.id.btnUploadPhotoVideo);
-        textInputLayout = findViewById(R.id.textInputLayout);
+        TextInputLayout textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
 
         btnTweet.setOnClickListener(this);
@@ -240,42 +234,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 .show();
     }
 
-    /*public void showOptionMediaDialog(){
-        String[] mediaOptions = {"Select image(s)", "Select a video", "Capture a photo", "Capture a video"};
-
-        new AlertDialog.Builder(this)
-                //.setTitle("What is this permission for?")
-                //.setMessage("You need the permission to upload an image on your tweet.\nPress \"OK\" to get the permission.")
-                .setItems(mediaOptions, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int which) {
-                        switch (which){
-                            case 0://select images
-                                if (checkPermissionToReadStorage()){
-                                    uploadPhotos();
-                                }
-                                break;
-                            case 1://select a video
-                                if (checkPermissionToReadStorage()){
-                                    uploadVideo();
-                                }
-                                break;
-                            case 2://take a photo
-                                if (checkPermissionToTakePhoto()){
-                                    takeOnePhoto();
-                                }
-                                break;
-                            case 3://capture a video
-                                if (checkPermissionToTakePhoto()){
-                                    captureOneVideo();
-                                }
-                                break;
-                        }
-                    }
-                })
-                .show();
-    }//END showOptionMediaDialog*/
-
     private void uploadVideo(){
         Intent videoPickerIntent = new Intent();
         videoPickerIntent.setType("video/*");
@@ -296,7 +254,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         File cFolder = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);//DIRECTORY_DCIM
 
         String fileDate = new SimpleDateFormat(
-                //"ddHHmmss", Locale.US).format(new Date());
                 "ddHHmmss", Locale.getDefault()).format(new Date());
 
         String fileName = String.format("CameraIntent_%s.jpg", fileDate);
@@ -425,20 +382,12 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
                     // MEDIA GALLERY
                     selectedVideoPath = getPathFromUri(this, selectedImageUri);
-
-                    if (selectedVideoPath != null) {
-                        /*Intent intent = new Intent(Tweet.this, VideoplayAvtivity.class);
-                        intent.putExtra("path", selectedImagePath);
-                        startActivity(intent);*/
-                    }
                 }else if (requestCode == REQUEST_VIDEO_CAPTURE){
                     Uri newVideoUri = data.getData();
 
                     // MEDIA GALLERY
                     selectedVideoPath = getPathFromUri(this, newVideoUri);
                 }else if (requestCode == REQUEST_TAKE_PHOTO){
-                    //Toast.makeText(this, "You have taken a photo.", Toast.LENGTH_SHORT).show();
-
                     if (cameraFile != null){
                         //registerDatabase(cameraFile);
                         System.out.println("cameraFile: " + cameraFile);
@@ -463,7 +412,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
     // Runtime Permission check
     private void requestTwoPermissions(){
-        // Two permissions are already granted
+        // If at least one of two permissions isn't yet granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
             ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
         {
@@ -666,14 +615,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             progressDialog.setProgressStyle(0);
             progressDialog.setMax(100);
             progressDialog.setMessage(getString(R.string.tweet_sending));
-
-            // make a button
-            /*progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int which) {
-                    dialogInterface.dismiss();
-                }
-            });*/
 
             progressDialog.show();
             super.onPreExecute();

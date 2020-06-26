@@ -1,4 +1,4 @@
-package com.example.tweeter;
+package com.yasu_k.saezuri;
 
 import android.content.Context;
 

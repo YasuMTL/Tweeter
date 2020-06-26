@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.tweeter">
+    package="com.yasu_k.saezuri">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
@@ -8,7 +8,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/twitter"
+        android:icon="@drawable/bird_tweeting"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -24,7 +24,7 @@
                 android:resource="@xml/provider_path"/>
         </provider>
         
-        <activity android:name=".ReceiveToken" android:label="@string/app_name"
+        <activity android:name="com.yasu_k.saezuri.ReceiveToken" android:label="@string/app_name"
             android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -33,7 +33,7 @@
                 <data android:scheme="callback"/>
             </intent-filter>
         </activity>
-        <activity android:name=".Tweet">
+        <activity android:name="com.yasu_k.saezuri.Tweet">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
