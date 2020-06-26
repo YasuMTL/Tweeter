@@ -9,5 +9,21 @@
     <string name="what_s_happening">What\'s happening?</string>
     <string name="clear">Clear</string>
     <string name="video">Video</string>
-    <string name="tweet_sending">Sending tweet...</string>
+    <string name="tweet_sending">Sending tweet…</string>
+    <string name="back_to_main">Back</string>
+    <string name="login_success">You have successfully logged in!</string>
+    <string name="over140">Over 140 letters!</string>
+    <string name="not_picked_images">You haven\'t picked image from gallery</string>
+    <string name="fail_photo">You couldn\'t take photo for some reason…</string>
+    <string name="attach_fail">You failed to attach image(s) or a video due to the lack of permission</string>
+    <string name="permission_external_storage">You need permission to access to the external storage.</string>
+    <string name="permission_camera">You need permission to use camera.</string>
+    <string name="permission_granted">You can attach photos or video now.</string>
+    <string name="need_permission">You need permission!!</string>
+    <string name="warning_no_permission">Without the permission, you cannot upload an image!</string>
+    <string name="logout_success">You have successfully logged out!</string>
+    <string name="tweet_sent_success">Tweet was sent !</string>
+    <string name="twitter_unavailable">Twitter unavailable. Try again later.</string>
+    <string name="no_text_to_tweet">No text to tweet!</string>
+    <string name="unknown_error">Something wrong…</string>
 </resources>

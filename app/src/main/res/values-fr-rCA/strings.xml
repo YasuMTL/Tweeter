@@ -10,4 +10,20 @@
     <string name="tweet_sending">Envoi d\'un tweet...</string>
     <string name="login">s\'identifier</string>
     <string name="tweet">Tweeter</string>
+    <string name="back_to_main">Revenir</string>
+    <string name="login_success">Vous êtes maintenant connecté.e !</string>
+    <string name="over140">Ça dépasse 140 lettres !</string>
+    <string name="not_picked_images">Vous n\'avez choisi aucune image de gallery.</string>
+    <string name="fail_photo">Vous n\'avez pas réussi à photographier pour une raison unconnue.</string>
+    <string name="attach_fail">Quelque chose qui ne marche pas.</string>
+    <string name="permission_external_storage">Une permission pour accéder au stockage externe est nécessaire.</string>
+    <string name="permission_camera">Une permission pour accéder au caméra est nécessaire.</string>
+    <string name="permission_granted">Permission accordée. Vous pouvez maintenant photographier.</string>
+    <string name="need_permission">Vous devez avoir la permission !</string>
+    <string name="warning_no_permission">Vous ne pouvez pas envoyer d\'image ni une vidéo sans la permission.</string>
+    <string name="logout_success">Vous êtes déconnecté.e.</string>
+    <string name="tweet_sent_success">Le tweet a été envoyé avec succès !</string>
+    <string name="twitter_unavailable">Twitter indisponible. Ressayez plus tard</string>
+    <string name="no_text_to_tweet">Aucun texte à envoyer !</string>
+    <string name="unknown_error">Une erreur est arrivée...</string>
 </resources>
