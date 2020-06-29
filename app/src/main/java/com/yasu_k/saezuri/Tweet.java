@@ -595,6 +595,11 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         return cb;
     }
 
+    private void flushOutUploadedImageVideo(){
+        imagesPathList.clear();
+        selectedVideoPath = null;
+    }
+
     //1st inner AsyncTask class
     @SuppressLint("StaticFieldLeak")
     class SendTweet extends AsyncTask<String, Integer, Integer>
@@ -654,17 +659,16 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     }
 
                     //Remove the video once it was uploaded
-                    selectedVideoPath = null;
+                    flushOutUploadedImageVideo();
                 }
                 //Image set
                 else if(imagesPathList.size() > 4){
                     uploadedMoreThan4Images = true;
                     //empty the list
-                    imagesPathList.clear();
-                    selectedVideoPath = null;
-                }else if (imagesPathList.size() > 1){
+                    flushOutUploadedImageVideo();
+                }else if (imagesPathList.size() >= 1){
                     System.out.println("Uploading more than one image...");
-                    //upload multiple image files (4 files at maximum)
+                    //upload multiple image files (4 files at most)
                     long[] mediaIds = new long[imagesPathList.size()];
                     for (int i = 0; i < mediaIds.length; i++){
                         System.out.println("imagesPathList.get(i): " + imagesPathList.get(i));
@@ -675,23 +679,24 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     status.setMediaIds(mediaIds);
 
                     //empty the list
-                    imagesPathList.clear();
-                }else if (imagesPathList.size() == 1){
+                    flushOutUploadedImageVideo();
+                }/*else if (imagesPathList.size() == 1){
                     System.out.println("Uploading a single image...");
                     System.out.println("imagesPathList.get(0): " + imagesPathList.get(0));
+
                     //upload one image file
-                    status.setMedia(new File(imagesPathList.get(0)));
+                    //status.setMedia(new File(imagesPathList.get(0)));
+                    status.media(new File(imagesPathList.get(0)));
+
                     //empty the list
-                    imagesPathList.clear();
-                }else{
+                    flushOutUploadedImageVideo();
+                }*/else{
                     System.out.println("Uploading nothing...");
                     didIUploadNothing = true;
-                    System.out.println("BEFORE setMedia");
                     status.setMedia(null);
-                    System.out.println("AFTER setMedia");
+
                     //empty the list
-                    imagesPathList.clear();
-                    selectedVideoPath = null;
+                    flushOutUploadedImageVideo();
                 }
 
                 //send tweet
@@ -715,6 +720,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 System.out.println("te.getErrorMessage(): " + te.getErrorMessage());
                 statusCode = te.getStatusCode();
                 errorCode = te.getErrorCode();
+
+                flushOutUploadedImageVideo();
             }
 
             return null;
@@ -736,20 +743,27 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             if(statusCode == 200){
                 Toast.makeText(Tweet.this, getString(R.string.tweet_sent_success), Toast.LENGTH_SHORT).show();
             }else if(statusCode == 503){
-                Toast.makeText(Tweet.this, getString(R.string.twitter_unavailable), Toast.LENGTH_SHORT).show();
+                Toast.makeText(Tweet.this, getString(R.string.twitter_unavailable), Toast.LENGTH_LONG).show();
             }else if (statusCode == 403){
                 switch (errorCode){
                     case 170:
                         Toast.makeText(Tweet.this, getString(R.string.no_text_to_tweet), Toast.LENGTH_SHORT).show();
                         break;
 
+                    case 193:
+                        Toast.makeText(Tweet.this, getString(R.string.media_is_too_large), Toast.LENGTH_LONG).show();
+                        break;
+                    case -1:
+                        Toast.makeText(Tweet.this, getString(R.string.unknown_error), Toast.LENGTH_LONG).show();
+                        break;
+
                     default:
                 }
 
             }else if(statusCode == 400){
-                Toast.makeText(Tweet.this, "The request was invalid. Try again later.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(Tweet.this, getString(R.string.request_invalid), Toast.LENGTH_SHORT).show();
             }else if (uploadedMoreThan4Images){
-                Toast.makeText(Tweet.this, "You cannot send no more than 4 images!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(Tweet.this, getString(R.string.four_images_at_most), Toast.LENGTH_SHORT).show();
             }else{
                 Toast.makeText(Tweet.this, getString(R.string.unknown_error), Toast.LENGTH_SHORT).show();
             }
