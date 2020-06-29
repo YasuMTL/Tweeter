@@ -23,5 +23,9 @@
     <string name="tweet_sent_success">Le tweet a été envoyé avec succès !</string>
     <string name="twitter_unavailable">Twitter indisponible. Ressayez plus tard</string>
     <string name="no_text_to_tweet">Aucun texte à envoyer !</string>
-    <string name="unknown_error">Une erreur est arrivée...</string>
+    <string name="unknown_error">Une erreur inconnue. Ressayez de tweeter d\'une façon différente</string>
+    <string name="app_name">Saézuri</string>
+    <string name="media_is_too_large">Une ou deux images téléversées sont trop grandes. Ressayez de tweeter avec une autre image.</string>
+    <string name="request_invalid">La requête a été invalide. Ressayez-la d\'une façon différente.</string>
+    <string name="four_images_at_most">Vous pouvez envoyer 4 images au plus.</string>
 </resources>

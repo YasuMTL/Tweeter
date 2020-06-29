@@ -23,5 +23,9 @@
     <string name="tweet_sent_success">ツイートが送信されました。</string>
     <string name="twitter_unavailable">ツイッターが機能していないようです。後でもう一度お試しください。</string>
     <string name="no_text_to_tweet">送信する文章も画像・動画もありません。</string>
-    <string name="unknown_error">何らかのエラーが発生したようです。</string>
+    <string name="unknown_error">何らかのエラーが発生したようです。添付画像を変える等、違う方法でツイートし直してみて下さい。</string>
+    <string name="app_name">さえずり</string>
+    <string name="media_is_too_large">アップロードされた画像データが大き過ぎるようです。違う画像を使ってツイートし直してみて下さい。</string>
+    <string name="request_invalid">送信されたリクエストに不備があったようです。違う方法で再度お試しください。</string>
+    <string name="four_images_at_most">同時に投稿できる画像は4枚までです。</string>
 </resources>

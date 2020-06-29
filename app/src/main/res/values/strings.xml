@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">Saezuri</string>
+    <string name="app_name">Saezuri</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="tweet">Tweet</string>
@@ -23,5 +23,8 @@
     <string name="tweet_sent_success">Tweet was sent !</string>
     <string name="twitter_unavailable">Twitter unavailable. Try again later.</string>
     <string name="no_text_to_tweet">No text to tweet!</string>
-    <string name="unknown_error">Something wrong…</string>
+    <string name="media_is_too_large">One or more of the uploaded media is too large. Try to tweet with another image.</string>
+    <string name="unknown_error">The tweet wasn\'t sent for some reason. Try to tweet in a different way.</string>
+    <string name="request_invalid">The request was invalid. Try again in some other way.</string>
+    <string name="four_images_at_most">You cannot send no more than 4 images!</string>
 </resources>
