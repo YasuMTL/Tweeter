@@ -28,4 +28,5 @@
     <string name="media_is_too_large">Une ou deux images téléversées sont trop grandes. Ressayez de tweeter avec une autre image.</string>
     <string name="request_invalid">La requête a été invalide. Ressayez-la d\'une façon différente.</string>
     <string name="four_images_at_most">Vous pouvez envoyer 4 images au plus.</string>
+    <string name="size_too_large">Au moins la taille d\'une des images est trop large. Ressayez avec une autre.</string>
 </resources>

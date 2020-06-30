@@ -27,4 +27,5 @@
     <string name="unknown_error">The tweet wasn\'t sent for some reason. Try to tweet in a different way.</string>
     <string name="request_invalid">The request was invalid. Try again in some other way.</string>
     <string name="four_images_at_most">You cannot send no more than 4 images!</string>
+    <string name="size_too_large">At least one of the images\' size is too large ! Try with another one.</string>
 </resources>

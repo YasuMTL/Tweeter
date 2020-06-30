@@ -28,4 +28,5 @@
     <string name="media_is_too_large">アップロードされた画像データが大き過ぎるようです。違う画像を使ってツイートし直してみて下さい。</string>
     <string name="request_invalid">送信されたリクエストに不備があったようです。違う方法で再度お試しください。</string>
     <string name="four_images_at_most">同時に投稿できる画像は4枚までです。</string>
+    <string name="size_too_large">画像のサイズが既定の容量を超えています。違う画像で再度お試しください。</string>
 </resources>
