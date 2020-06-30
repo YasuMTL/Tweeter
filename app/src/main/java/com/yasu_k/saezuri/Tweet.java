@@ -18,6 +18,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -25,10 +26,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -36,12 +40,15 @@ import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import twitter4j.HttpParameter;
 import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -82,13 +89,14 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tweet);
 
-        Button btnTweet = findViewById(R.id.btnSendTweet),
+        final Button btnTweet = findViewById(R.id.btnSendTweet),
                 btnLogin = findViewById(R.id.btnLogin),
                 btnLogout = findViewById(R.id.btnLogOut),
                 btnClear = findViewById(R.id.btnClear),
                 btnUploadPhotoVideo = findViewById(R.id.btnUploadPhotoVideo);
         TextInputLayout textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
+        final TextView tvTweetTextCount = findViewById(R.id.tvTweetTextCount);
 
         btnTweet.setOnClickListener(this);
         btnLogin.setOnClickListener(this);
@@ -115,10 +123,36 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             textInputLayout.setVisibility(View.INVISIBLE);
         }
 
-        imagesPathList = new ArrayList<String>();
+        imagesPathList = new ArrayList<>();
 
         mOauth = new OAuthAuthorization(ConfigurationContext.getInstance());
         getTwitterKeysAndTokens();
+
+        etTweet.addTextChangedListener(new TextWatcher(){
+
+            public void beforeTextChanged(CharSequence s, int start, int count,int after) {
+            }
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                final int textColor;
+                int length = 140 - s.length();
+
+                if(length < 0){
+                    textColor = Color.RED;
+                    btnTweet.setEnabled(false);
+                    btnTweet.setTextColor(Color.GRAY);
+                }else{
+                    textColor = Color.GRAY;
+                    btnTweet.setEnabled(true);
+                    btnTweet.setTextColor(Color.WHITE);
+                }
+                tvTweetTextCount.setTextColor(textColor);
+                tvTweetTextCount.setText(String.valueOf(length));
+            }
+
+            public void afterTextChanged(Editable s) {
+            }
+        });
     }
 
     private void getTwitterKeysAndTokens(){
@@ -237,7 +271,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     private void uploadVideo(){
         Intent videoPickerIntent = new Intent();
         videoPickerIntent.setType("video/*");
-        videoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
+//        videoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
+        videoPickerIntent.setAction(Intent.ACTION_PICK);
         startActivityForResult(Intent.createChooser(videoPickerIntent, "Select Video"), RESULT_LOAD_VIDEO);
     }
 
@@ -245,7 +280,13 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         Intent photoPickerIntent = new Intent();
         photoPickerIntent.setType("image/*");
         photoPickerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
+
+        //We pass an extra array with the accepted mime types. This will ensure only components with these MIME types as targeted.
+        String[] mimeTypes = {"image/jpeg", "image/png"};
+        photoPickerIntent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+
+        //photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
+        photoPickerIntent.setAction(Intent.ACTION_PICK);
         startActivityForResult(Intent.createChooser(photoPickerIntent, "Select Image"), RESULT_LOAD_IMAGE);
     }
 
@@ -283,11 +324,12 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     public String getPathFromUri(final Context context, final Uri uri) {
-        boolean isAfterKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+        //boolean isAfterKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+
         // DocumentProvider
         String TAG = "getPathFromUri";
         Log.e(TAG,"uri:" + uri.getAuthority());
-        if (isAfterKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+        if (DocumentsContract.isDocumentUri(context, uri)) {
             if ("com.android.externalstorage.documents".equals(
                     uri.getAuthority())) {// ExternalStorageProvider
                 final String docId = DocumentsContract.getDocumentId(uri);
@@ -302,7 +344,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     uri.getAuthority())) {// DownloadsProvider
                 final String id = DocumentsContract.getDocumentId(uri);
                 final Uri contentUri = ContentUris.withAppendedId(
-                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                        Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
                 return getDataColumn(context, contentUri, null, null);
             }else if ("com.android.providers.media.documents".equals(
                     uri.getAuthority())) {// MediaProvider
@@ -354,11 +396,14 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             try {
                 if (requestCode == RESULT_LOAD_IMAGE) {
                     if (null != data){
+                        String imagePath;
+
                         if (data.getData() != null) {
                             //When an image is picked
                             Uri mImageUri = data.getData();
-                            String imagePath = getPathFromUri(this, mImageUri);
-                            imagesPathList.add(imagePath);
+                            imagePath = getPathFromUri(this, mImageUri);
+
+                            sizePhotoCheck(imagePath);
                         } else {
                             //When multiple images are picked
                             if (data.getClipData() != null) {
@@ -367,7 +412,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                                     Uri selectedImage = data.getClipData().getItemAt(i).getUri();
                                     //String type list which contains file path of each selected image file
-                                    imagesPathList.add(getPathFromUri(Tweet.this, selectedImage));
+                                    imagePath = getPathFromUri(Tweet.this, selectedImage);
+
+                                    sizePhotoCheck(imagePath);
                                     System.out.println("selectedImage: " + selectedImage);
                                 }
                             }
@@ -382,33 +429,60 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
                     // MEDIA GALLERY
                     selectedVideoPath = getPathFromUri(this, selectedImageUri);
+                    sizeVideoCheck(selectedVideoPath);
                 }else if (requestCode == REQUEST_VIDEO_CAPTURE){
                     Uri newVideoUri = data.getData();
 
                     // MEDIA GALLERY
                     selectedVideoPath = getPathFromUri(this, newVideoUri);
+                    sizeVideoCheck(selectedVideoPath);
                 }else if (requestCode == REQUEST_TAKE_PHOTO){
                     if (cameraFile != null){
                         //registerDatabase(cameraFile);
                         System.out.println("cameraFile: " + cameraFile);
                         System.out.println("cameraFile.getAbsolutePath(): " + cameraFile.getAbsolutePath());
-
                         System.out.println("mCapturedImageURI: " + mCapturedImageURI);
                         System.out.println("mCapturedImageURI.getAuthority(): " + mCapturedImageURI.getAuthority());
 
                         String imagePath = cameraFile.getAbsolutePath();
 
-                        imagesPathList.add(imagePath);
+                        if (cameraFile.length() <= 5000000){
+                            imagesPathList.add(imagePath);
+                        }else{
+                            imagesPathList.clear();
+                            Toast.makeText(this, getString(R.string.size_too_large), Toast.LENGTH_LONG).show();
+                        }
                     }else{
                         Toast.makeText(this, getString(R.string.fail_photo), Toast.LENGTH_SHORT).show();
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();// review translation too (FR and JP)
+            }catch (Exception e) {
+                e.printStackTrace();
                 Toast.makeText(this, getString(R.string.attach_fail), Toast.LENGTH_SHORT).show();
             }
         }
     }//END onActivityResult()
+
+    private void sizePhotoCheck(String filePath){
+        File imageFile = new File(filePath);
+
+        // Image size <= 5 MB (https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices)
+        if (imageFile.length() <= 5000000){
+            imagesPathList.add(filePath);
+        }else{
+            imagesPathList.clear();
+            Toast.makeText(this, getString(R.string.size_too_large), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void sizeVideoCheck(String filePath){
+        File fileToCheck = new File(filePath);
+
+        //Video file size must not exceed 512 MB (https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices)
+        if (fileToCheck.length() > 512000000) {
+            selectedVideoPath = "";
+        }
+    }
 
     // Runtime Permission check
     private void requestTwoPermissions(){
@@ -474,9 +548,8 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == PERMISSION_REQUEST_CODE){
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED){
                 //Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT).show();
-            }else{
                 Toast.makeText(this, getString(R.string.need_permission), Toast.LENGTH_SHORT).show();
             }
         }
@@ -569,17 +642,10 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void tweet() {
-        boolean wasTweetSent = true;
-
         try {
             new SendTweet().execute(etTweet.getText().toString());
         }catch (Exception e){
             e.printStackTrace();
-            wasTweetSent = false;
-        }
-
-        if (wasTweetSent){
-            clearOutEtTweet();
         }
     }
 
@@ -596,6 +662,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void flushOutUploadedImageVideo(){
+        System.out.println("FLUSH !!!!!!!!!!!!!!!!!!!!!!!!!! ");
         imagesPathList.clear();
         selectedVideoPath = null;
     }
@@ -657,46 +724,31 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     }catch (IOException e){
                         e.printStackTrace();
                     }
-
-                    //Remove the video once it was uploaded
-                    flushOutUploadedImageVideo();
                 }
                 //Image set
                 else if(imagesPathList.size() > 4){
                     uploadedMoreThan4Images = true;
-                    //empty the list
-                    flushOutUploadedImageVideo();
                 }else if (imagesPathList.size() >= 1){
-                    System.out.println("Uploading more than one image...");
+                    System.out.println("Uploading image(s)...");
                     //upload multiple image files (4 files at most)
                     long[] mediaIds = new long[imagesPathList.size()];
                     for (int i = 0; i < mediaIds.length; i++){
                         System.out.println("imagesPathList.get(i): " + imagesPathList.get(i));
-                        UploadedMedia media = twitter.uploadMedia(new File(imagesPathList.get(i)));
+
+                        File image = new File(imagesPathList.get(i));
+                        System.out.println("image.length(): " + image.length());
+
+                        UploadedMedia media = twitter.uploadMedia(image);
+                        System.out.println("media.getImageType(): " + media.getImageType() + " media.getSize(): " + media.getSize());
+
                         mediaIds[i] = media.getMediaId();
                     }
 
                     status.setMediaIds(mediaIds);
-
-                    //empty the list
-                    flushOutUploadedImageVideo();
-                }/*else if (imagesPathList.size() == 1){
-                    System.out.println("Uploading a single image...");
-                    System.out.println("imagesPathList.get(0): " + imagesPathList.get(0));
-
-                    //upload one image file
-                    //status.setMedia(new File(imagesPathList.get(0)));
-                    status.media(new File(imagesPathList.get(0)));
-
-                    //empty the list
-                    flushOutUploadedImageVideo();
-                }*/else{
+                }else{
                     System.out.println("Uploading nothing...");
                     didIUploadNothing = true;
                     status.setMedia(null);
-
-                    //empty the list
-                    flushOutUploadedImageVideo();
                 }
 
                 //send tweet
@@ -710,6 +762,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                     Log.d("TWEET", "The tweet was sent as expected...");
                 }
             }
+            /*catch (FileNotFoundException fe){
+                fe.printStackTrace();
+            }*/
             catch(TwitterException te)
             {
                 te.printStackTrace();
@@ -720,10 +775,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 System.out.println("te.getErrorMessage(): " + te.getErrorMessage());
                 statusCode = te.getStatusCode();
                 errorCode = te.getErrorCode();
-
-                flushOutUploadedImageVideo();
             }
 
+            flushOutUploadedImageVideo();
             return null;
         }
 
@@ -742,6 +796,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             //Handling error
             if(statusCode == 200){
                 Toast.makeText(Tweet.this, getString(R.string.tweet_sent_success), Toast.LENGTH_SHORT).show();
+                clearOutEtTweet();
             }else if(statusCode == 503){
                 Toast.makeText(Tweet.this, getString(R.string.twitter_unavailable), Toast.LENGTH_LONG).show();
             }else if (statusCode == 403){
