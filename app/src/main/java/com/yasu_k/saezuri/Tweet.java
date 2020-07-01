@@ -28,6 +28,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -122,6 +123,10 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             btnUploadPhotoVideo.setVisibility(View.INVISIBLE);
             textInputLayout.setVisibility(View.INVISIBLE);
         }
+
+        //hyperlink
+        TextView privacyPolicy = (TextView) findViewById(R.id.tvPrivacyPolicy);
+        privacyPolicy.setMovementMethod(LinkMovementMethod.getInstance());
 
         imagesPathList = new ArrayList<>();
 
