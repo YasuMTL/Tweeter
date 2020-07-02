@@ -125,7 +125,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         }
 
         //hyperlink
-        TextView privacyPolicy = (TextView) findViewById(R.id.tvPrivacyPolicy);
+        TextView privacyPolicy = findViewById(R.id.tvPrivacyPolicy);
         privacyPolicy.setMovementMethod(LinkMovementMethod.getInstance());
 
         imagesPathList = new ArrayList<>();
@@ -846,8 +846,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 Intent login = new Intent(Intent.ACTION_VIEW, uri);
                 startActivityForResult(login, 0); //Implicit intent to log in on web browser
             } catch (TwitterException e) {
-                e.printStackTrace();
-            } catch (Exception e){
                 e.printStackTrace();
             }
             return null;
