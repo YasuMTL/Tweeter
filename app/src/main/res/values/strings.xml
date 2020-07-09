@@ -29,4 +29,6 @@
     <string name="four_images_at_most">You cannot send no more than 4 images!</string>
     <string name="size_too_large">At least one of the images\' size is too large ! Try with another one.</string>
     <string name="privacy_policy" translatable="false"><a href="https://yasumtl.github.io/privacy_policy/saezuri.html">Privacy Policy</a></string>
+    <string name="admob_id" translatable="false">ca-app-pub-6638004970288520~6863230244</string>
+    <string name="adUnit_id" translatable="false">ca-app-pub-6638004970288520/8645239296</string>
 </resources>
