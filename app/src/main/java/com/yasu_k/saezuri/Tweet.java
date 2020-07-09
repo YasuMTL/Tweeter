@@ -35,6 +35,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
@@ -185,6 +186,43 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
         mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+        /*mAdView.setAdListener(new AdListener(){
+
+            private void showToast(String message) {
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onAdLoaded() {
+                super.onAdLoaded();
+                showToast("Ad loaded.");
+                Log.d("AdLoaded", "OK");
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+                super.onAdFailedToLoad(errorCode);
+
+                String message = String.format("Ad failed to load with error code %d.", errorCode);
+                showToast(message);
+                Log.d("AdLoaded", message);
+            }
+
+            @Override
+            public void onAdOpened() {
+                showToast("Ad opened.");
+            }
+
+            @Override
+            public void onAdClosed() {
+                showToast("Ad closed.");
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                showToast("Ad left application.");
+            }
+        });*/
     }
 
     /** Called when leaving the activity */
