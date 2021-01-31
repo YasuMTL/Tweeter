@@ -35,22 +35,21 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
@@ -65,7 +64,7 @@ import twitter4j.conf.ConfigurationBuilder;
 import twitter4j.conf.ConfigurationContext;
 //<div>Icons made by <a href="https://www.flaticon.com/<?=_('authors/')?>freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 
-public class Tweet extends AppCompatActivity implements View.OnClickListener
+public class Tweet extends AppCompatActivity implements View.OnClickListener/*, View.OnFocusChangeListener*/
 {
     private EditText etTweet;
     // Login
@@ -105,6 +104,7 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 btnUploadPhotoVideo = findViewById(R.id.btnUploadPhotoVideo);
         TextInputLayout textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
+        //etTweet.setOnFocusChangeListener(this);
         final TextView tvTweetTextCount = findViewById(R.id.tvTweetTextCount);
 
         btnTweet.setOnClickListener(this);
@@ -146,9 +146,9 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             public void beforeTextChanged(CharSequence s, int start, int count,int after) {
             }
 
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            public void onTextChanged(CharSequence enteredText, int start, int before, int count) {
                 final int textColor;
-                int length = 140 - s.length();
+                int length = 280 - getTextLength(enteredText);
 
                 if(length < 0){
                     textColor = Color.RED;
@@ -167,6 +167,71 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
             }
         });
     }
+
+    private int getTextLength(CharSequence enteredText) {
+        String writtenText = enteredText.toString();
+        int textLength = 0;
+
+        for (int i = 0; i < writtenText.length(); i++){
+            String oneChar = Character.toString(writtenText.charAt(i));
+            byte[] utf8Bytes = oneChar.getBytes(StandardCharsets.UTF_8);
+            int oneCharBytes = utf8Bytes.length;
+
+            if (oneCharBytes == 3){
+                //Count two if the character is Chinese, Japanese, Korean or Emoji.
+                textLength += 2;
+            }else{
+                //Count one if the character is NOT Chinese, Japanese, Korean or Emoji.
+                textLength++;
+            }
+        }
+
+        return textLength;
+    }
+
+    private void test(){
+        final String korean = "한국어",
+                    mandarin = "北方话",
+                     string2 = "t";
+
+        // Check length, in characters
+        System.out.println("Korean length: " + korean.length());
+        System.out.println("Mandarin length: " + mandarin.length());
+
+        try{
+            // Check encoded sizes
+            byte[] utf8Bytes = korean.getBytes(StandardCharsets.UTF_8);
+            System.out.println("Korean: " + utf8Bytes.length);
+
+            utf8Bytes = mandarin.getBytes(StandardCharsets.UTF_8);
+            System.out.println("Mandarin Chinese: " + utf8Bytes.length);
+
+        }catch(Error e){
+
+        }
+
+    }
+
+    /*private boolean isCJK(int codepoint) {
+        Character.UnicodeBlock block = Character.UnicodeBlock.of(codepoint);
+        return (
+                Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS.equals(block)||
+                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A.equals(block) ||
+                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B.equals(block) ||
+                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C.equals(block) || // api 19
+                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D.equals(block) || // api 19
+                        Character.UnicodeBlock.CJK_COMPATIBILITY.equals(block) ||
+                        Character.UnicodeBlock.CJK_COMPATIBILITY_FORMS.equals(block) ||
+                        Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS.equals(block) ||
+                        Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT.equals(block) ||
+                        Character.UnicodeBlock.CJK_RADICALS_SUPPLEMENT.equals(block) ||
+                        Character.UnicodeBlock.CJK_STROKES.equals(block) ||                        // api 19
+                        Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION.equals(block) ||
+                        Character.UnicodeBlock.ENCLOSED_CJK_LETTERS_AND_MONTHS.equals(block) ||
+                        Character.UnicodeBlock.ENCLOSED_IDEOGRAPHIC_SUPPLEMENT.equals(block) ||    // api 19
+                        Character.UnicodeBlock.KANGXI_RADICALS.equals(block) ||
+                        Character.UnicodeBlock.IDEOGRAPHIC_DESCRIPTION_CHARACTERS.equals(block));
+    }*/
 
     private void setAds(){
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
@@ -301,11 +366,14 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
                 break;
 
             case R.id.btnSendTweet:
-                if (notOverLetterLimit()){
+                /*if (notOverLetterLimit()){
                     tweet();
                 }else{
                     Toast.makeText(this, getString(R.string.over140), Toast.LENGTH_SHORT).show();
-                }
+                }*/
+
+                //test
+                tweet();
 
                 break;
 
@@ -759,10 +827,24 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
     }
 
     private void flushOutUploadedImageVideo(){
-        System.out.println("FLUSH !!!!!!!!!!!!!!!!!!!!!!!!!! ");
+        //System.out.println("FLUSH !!!!!!!!!!!!!!!!!!!!!!!!!! ");
         imagesPathList.clear();
         selectedVideoPath = null;
     }
+
+/*    @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+        if (hasFocus){
+            Toast.makeText(this, "Got focus", Toast.LENGTH_SHORT).show();
+            InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            InputMethodSubtype inputMethodSubtype = inputMethodManager.getCurrentInputMethodSubtype();
+            Locale mLocale = new Locale(inputMethodSubtype.getLocale());
+            String localeDisplayName = mLocale.getDisplayName();  //e.g. "English"
+            Toast.makeText(this, "Selected Language: " + localeDisplayName, Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(this, "Lost focus", Toast.LENGTH_SHORT).show();
+        }
+    }*/
 
     //1st inner AsyncTask class
     @SuppressLint("StaticFieldLeak")
@@ -776,7 +858,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener
 
         @Override
         protected void onPreExecute() {
-
             //https://www.youtube.com/watch?v=fg9C2fEE4bY
             progressDialog = new ProgressDialog(Tweet.this);
             progressDialog.setCancelable(true);
