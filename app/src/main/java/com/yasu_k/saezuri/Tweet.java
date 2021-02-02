@@ -43,7 +43,6 @@ import com.google.android.gms.ads.initialization.OnInitializationCompleteListene
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -59,28 +58,33 @@ import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.UploadedMedia;
 import twitter4j.auth.OAuthAuthorization;
-import twitter4j.auth.RequestToken;
 import twitter4j.conf.ConfigurationBuilder;
 import twitter4j.conf.ConfigurationContext;
+
+import static com.yasu_k.saezuri.Code.PERMISSION_REQUEST_CODE;
+import static com.yasu_k.saezuri.Code.REQUEST_TAKE_PHOTO;
+import static com.yasu_k.saezuri.Code.REQUEST_VIDEO_CAPTURE;
+import static com.yasu_k.saezuri.Code.RESULT_LOAD_IMAGE;
+import static com.yasu_k.saezuri.Code.RESULT_LOAD_VIDEO;
+import static com.yasu_k.saezuri.LoginInfo.mOauth;
+import static com.yasu_k.saezuri.LoginInfo.mRequest;
+import static com.yasu_k.saezuri.MediaOptions.CAPTURE_A_VIDEO;
+import static com.yasu_k.saezuri.MediaOptions.SELECT_A_VIDEO;
+import static com.yasu_k.saezuri.MediaOptions.SELECT_IMAGES;
+import static com.yasu_k.saezuri.MediaOptions.TAKE_A_PHOTO;
 //<div>Icons made by <a href="https://www.flaticon.com/<?=_('authors/')?>freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 
-public class Tweet extends AppCompatActivity implements View.OnClickListener/*, View.OnFocusChangeListener*/
+public class Tweet
+        extends AppCompatActivity
+        implements View.OnClickListener
 {
     private EditText etTweet;
-    // Login
-    static OAuthAuthorization mOauth;
-    static RequestToken mRequest;
     private String oAuthConsumerKey,
             oAuthConsumerSecret,
             oAuthAccessToken,
             oAuthAccessTokenSecret;
     private SharedPreferences spTwitterToken;
     private SharedPreferences.Editor editorTwitterToken;
-    final int RESULT_LOAD_IMAGE = 1;
-    final int PERMISSION_REQUEST_CODE = 777;
-    final int RESULT_LOAD_VIDEO = 2;
-    final int REQUEST_VIDEO_CAPTURE = 3;
-    final int REQUEST_TAKE_PHOTO = 4;
     private ArrayList<String> imagesPathList;
     private String selectedVideoPath;
     private ProgressDialog progressDialog;
@@ -404,24 +408,24 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener/*, 
         new MaterialAlertDialogBuilder(this)
                 .setItems(mediaOptions, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialogInterface, int which) {
-                        switch (which){
-                            case 0://select images
+                    public void onClick(DialogInterface dialogInterface, int whichOption) {
+                        switch (whichOption){
+                            case SELECT_IMAGES:
                                 if (checkPermissionToReadStorage()){
                                     uploadPhotos();
                                 }
                                 break;
-                            case 1://select a video
+                            case SELECT_A_VIDEO:
                                 if (checkPermissionToReadStorage()){
                                     uploadVideo();
                                 }
                                 break;
-                            case 2://take a photo
+                            case TAKE_A_PHOTO:
                                 if (checkPermissionToTakePhoto()){
                                     takeOnePhoto();
                                 }
                                 break;
-                            case 3://capture a video
+                            case CAPTURE_A_VIDEO:
                                 if (checkPermissionToTakePhoto()){
                                     captureOneVideo();
                                 }
@@ -831,20 +835,6 @@ public class Tweet extends AppCompatActivity implements View.OnClickListener/*, 
         imagesPathList.clear();
         selectedVideoPath = null;
     }
-
-/*    @Override
-    public void onFocusChange(View v, boolean hasFocus) {
-        if (hasFocus){
-            Toast.makeText(this, "Got focus", Toast.LENGTH_SHORT).show();
-            InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            InputMethodSubtype inputMethodSubtype = inputMethodManager.getCurrentInputMethodSubtype();
-            Locale mLocale = new Locale(inputMethodSubtype.getLocale());
-            String localeDisplayName = mLocale.getDisplayName();  //e.g. "English"
-            Toast.makeText(this, "Selected Language: " + localeDisplayName, Toast.LENGTH_SHORT).show();
-        }else{
-            Toast.makeText(this, "Lost focus", Toast.LENGTH_SHORT).show();
-        }
-    }*/
 
     //1st inner AsyncTask class
     @SuppressLint("StaticFieldLeak")
