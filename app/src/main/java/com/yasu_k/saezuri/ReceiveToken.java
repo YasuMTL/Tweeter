@@ -1,7 +1,5 @@
 package com.yasu_k.saezuri;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -9,10 +7,15 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.concurrent.ExecutionException;
 
 import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
+
+import static com.yasu_k.saezuri.LoginInfo.mOauth;
+import static com.yasu_k.saezuri.LoginInfo.mRequest;
 
 public class ReceiveToken extends AppCompatActivity {
     private Uri uri;
@@ -55,10 +58,10 @@ public class ReceiveToken extends AppCompatActivity {
     class fetchTwitterToken extends AsyncTask {
         @Override
         protected Object doInBackground(Object[] objects) {
-            String varifier = uri.getQueryParameter("oauth_verifier");
+            String verifier = uri.getQueryParameter("oauth_verifier");
 
             try {
-                mToken = Tweet.mOauth.getOAuthAccessToken(Tweet.mRequest, varifier);
+                mToken = mOauth.getOAuthAccessToken(mRequest, verifier);
             } catch (TwitterException e) {
                 e.printStackTrace();
             }
