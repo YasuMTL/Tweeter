@@ -68,6 +68,8 @@ import static com.yasu_k.saezuri.Code.RESULT_LOAD_IMAGE;
 import static com.yasu_k.saezuri.Code.RESULT_LOAD_VIDEO;
 import static com.yasu_k.saezuri.LoginInfo.mOauth;
 import static com.yasu_k.saezuri.LoginInfo.mRequest;
+import static com.yasu_k.saezuri.LoginInfo.oAuthConsumerKey;
+import static com.yasu_k.saezuri.LoginInfo.oAuthConsumerSecret;
 import static com.yasu_k.saezuri.MediaOptions.CAPTURE_A_VIDEO;
 import static com.yasu_k.saezuri.MediaOptions.SELECT_A_VIDEO;
 import static com.yasu_k.saezuri.MediaOptions.SELECT_IMAGES;
@@ -79,8 +81,8 @@ public class Tweet
         implements View.OnClickListener
 {
     private EditText etTweet;
-    private String oAuthConsumerKey,
-            oAuthConsumerSecret,
+    private String /*oAuthConsumerKey,
+            oAuthConsumerSecret,*/
             oAuthAccessToken,
             oAuthAccessTokenSecret;
     private SharedPreferences spTwitterToken;
@@ -108,7 +110,6 @@ public class Tweet
                 btnUploadPhotoVideo = findViewById(R.id.btnUploadPhotoVideo);
         TextInputLayout textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
-        //etTweet.setOnFocusChangeListener(this);
         final TextView tvTweetTextCount = findViewById(R.id.tvTweetTextCount);
 
         btnTweet.setOnClickListener(this);
@@ -193,64 +194,12 @@ public class Tweet
         return textLength;
     }
 
-    private void test(){
-        final String korean = "한국어",
-                    mandarin = "北方话",
-                     string2 = "t";
-
-        // Check length, in characters
-        System.out.println("Korean length: " + korean.length());
-        System.out.println("Mandarin length: " + mandarin.length());
-
-        try{
-            // Check encoded sizes
-            byte[] utf8Bytes = korean.getBytes(StandardCharsets.UTF_8);
-            System.out.println("Korean: " + utf8Bytes.length);
-
-            utf8Bytes = mandarin.getBytes(StandardCharsets.UTF_8);
-            System.out.println("Mandarin Chinese: " + utf8Bytes.length);
-
-        }catch(Error e){
-
-        }
-
-    }
-
-    /*private boolean isCJK(int codepoint) {
-        Character.UnicodeBlock block = Character.UnicodeBlock.of(codepoint);
-        return (
-                Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS.equals(block)||
-                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A.equals(block) ||
-                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B.equals(block) ||
-                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C.equals(block) || // api 19
-                        Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D.equals(block) || // api 19
-                        Character.UnicodeBlock.CJK_COMPATIBILITY.equals(block) ||
-                        Character.UnicodeBlock.CJK_COMPATIBILITY_FORMS.equals(block) ||
-                        Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS.equals(block) ||
-                        Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT.equals(block) ||
-                        Character.UnicodeBlock.CJK_RADICALS_SUPPLEMENT.equals(block) ||
-                        Character.UnicodeBlock.CJK_STROKES.equals(block) ||                        // api 19
-                        Character.UnicodeBlock.CJK_SYMBOLS_AND_PUNCTUATION.equals(block) ||
-                        Character.UnicodeBlock.ENCLOSED_CJK_LETTERS_AND_MONTHS.equals(block) ||
-                        Character.UnicodeBlock.ENCLOSED_IDEOGRAPHIC_SUPPLEMENT.equals(block) ||    // api 19
-                        Character.UnicodeBlock.KANGXI_RADICALS.equals(block) ||
-                        Character.UnicodeBlock.IDEOGRAPHIC_DESCRIPTION_CHARACTERS.equals(block));
-    }*/
-
     private void setAds(){
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
             public void onInitializationComplete(InitializationStatus initializationStatus) {
             }
         });
-
-        // Set your test devices. Check your logcat output for the hashed device ID to
-        // get test ads on a physical device. e.g.
-        // "Use RequestConfiguration.Builder().setTestDeviceIds(Arrays.asList("ABCDEF012345"))
-        // to get test ads on this device."
-        /*MobileAds.setRequestConfiguration(
-                new RequestConfiguration.Builder().setTestDeviceIds(Arrays.asList("39B7482D7FE5E6B69D3E1BA76F1929A7"))
-                        .build());*/
 
         mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
@@ -322,8 +271,8 @@ public class Tweet
     }
 
     private void getTwitterKeysAndTokens(){
-        oAuthConsumerKey = "LJi96Jk8iC8HsipGdi7TazT9q";
-        oAuthConsumerSecret = "N9Rf7eTxmy4YLHtaoQeAVoImowcAbFc0KYsUEoUTipi8Q80y6L";
+//        oAuthConsumerKey = "LJi96Jk8iC8HsipGdi7TazT9q";
+//        oAuthConsumerSecret = "N9Rf7eTxmy4YLHtaoQeAVoImowcAbFc0KYsUEoUTipi8Q80y6L";
 
         //Retrieve token after the login (for the first time)
         if (getIntent().getStringExtra("token") != null)
