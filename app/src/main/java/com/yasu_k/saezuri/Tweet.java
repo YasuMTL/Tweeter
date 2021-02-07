@@ -2,18 +2,14 @@ package com.yasu_k.saezuri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -35,22 +31,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
 
 import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
@@ -70,10 +58,8 @@ import static com.yasu_k.saezuri.LoginInfo.mOauth;
 import static com.yasu_k.saezuri.LoginInfo.mRequest;
 import static com.yasu_k.saezuri.LoginInfo.oAuthConsumerKey;
 import static com.yasu_k.saezuri.LoginInfo.oAuthConsumerSecret;
-import static com.yasu_k.saezuri.MediaOptions.CAPTURE_A_VIDEO;
-import static com.yasu_k.saezuri.MediaOptions.SELECT_A_VIDEO;
-import static com.yasu_k.saezuri.MediaOptions.SELECT_IMAGES;
-import static com.yasu_k.saezuri.MediaOptions.TAKE_A_PHOTO;
+import static com.yasu_k.saezuri.MediaOptions.cameraFile;
+import static com.yasu_k.saezuri.MediaOptions.mCapturedImageURI;
 //<div>Icons made by <a href="https://www.flaticon.com/<?=_('authors/')?>freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 
 public class Tweet
@@ -81,19 +67,20 @@ public class Tweet
         implements View.OnClickListener
 {
     private EditText etTweet;
-    private String /*oAuthConsumerKey,
-            oAuthConsumerSecret,*/
-            oAuthAccessToken,
+    private String oAuthAccessToken,
             oAuthAccessTokenSecret;
     private SharedPreferences spTwitterToken;
     private SharedPreferences.Editor editorTwitterToken;
     private ArrayList<String> imagesPathList;
     private String selectedVideoPath;
     private ProgressDialog progressDialog;
-    private Uri mCapturedImageURI;
-    private File cameraFile;
 
     private AdView mAdView;
+    private Button btnTweet,
+                btnLogin,
+                btnLogout,
+                btnClear,
+                btnUploadPhotoVideo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -101,22 +88,15 @@ public class Tweet
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tweet);
 
-        setAds();
+        mAdView = findViewById(R.id.adView);
+        SetAdView adView = new SetAdView(mAdView, getApplicationContext());
+        adView.initAd();
 
-        final Button btnTweet = findViewById(R.id.btnSendTweet),
-                btnLogin = findViewById(R.id.btnLogin),
-                btnLogout = findViewById(R.id.btnLogOut),
-                btnClear = findViewById(R.id.btnClear),
-                btnUploadPhotoVideo = findViewById(R.id.btnUploadPhotoVideo);
+        setupButtons();
+
         TextInputLayout textInputLayout = findViewById(R.id.textInputLayout);
         etTweet = findViewById(R.id.etTweet);
         final TextView tvTweetTextCount = findViewById(R.id.tvTweetTextCount);
-
-        btnTweet.setOnClickListener(this);
-        btnLogin.setOnClickListener(this);
-        btnLogout.setOnClickListener(this);
-        btnClear.setOnClickListener(this);
-        btnUploadPhotoVideo.setOnClickListener(this);
 
         spTwitterToken = getSharedPreferences("twitterToken", MODE_PRIVATE);
         boolean didILogIn = spTwitterToken.getBoolean("login", false);
@@ -173,6 +153,20 @@ public class Tweet
         });
     }
 
+    private void setupButtons() {
+        btnTweet = findViewById(R.id.btnSendTweet);
+        btnLogin = findViewById(R.id.btnLogin);
+        btnLogout = findViewById(R.id.btnLogOut);
+        btnClear = findViewById(R.id.btnClear);
+        btnUploadPhotoVideo = findViewById(R.id.btnUploadPhotoVideo);
+
+        btnTweet.setOnClickListener(this);
+        btnLogin.setOnClickListener(this);
+        btnLogout.setOnClickListener(this);
+        btnClear.setOnClickListener(this);
+        btnUploadPhotoVideo.setOnClickListener(this);
+    }
+
     private int getTextLength(CharSequence enteredText) {
         String writtenText = enteredText.toString();
         int textLength = 0;
@@ -192,55 +186,6 @@ public class Tweet
         }
 
         return textLength;
-    }
-
-    private void setAds(){
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
-            @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
-            }
-        });
-
-        mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
-        /*mAdView.setAdListener(new AdListener(){
-
-            private void showToast(String message) {
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onAdLoaded() {
-                super.onAdLoaded();
-                showToast("Ad loaded.");
-                Log.d("AdLoaded", "OK");
-            }
-
-            @Override
-            public void onAdFailedToLoad(int errorCode) {
-                super.onAdFailedToLoad(errorCode);
-
-                String message = String.format("Ad failed to load with error code %d.", errorCode);
-                showToast(message);
-                Log.d("AdLoaded", message);
-            }
-
-            @Override
-            public void onAdOpened() {
-                showToast("Ad opened.");
-            }
-
-            @Override
-            public void onAdClosed() {
-                showToast("Ad closed.");
-            }
-
-            @Override
-            public void onAdLeftApplication() {
-                showToast("Ad left application.");
-            }
-        });*/
     }
 
     /** Called when leaving the activity */
@@ -271,9 +216,6 @@ public class Tweet
     }
 
     private void getTwitterKeysAndTokens(){
-//        oAuthConsumerKey = "LJi96Jk8iC8HsipGdi7TazT9q";
-//        oAuthConsumerSecret = "N9Rf7eTxmy4YLHtaoQeAVoImowcAbFc0KYsUEoUTipi8Q80y6L";
-
         //Retrieve token after the login (for the first time)
         if (getIntent().getStringExtra("token") != null)
         {
@@ -290,7 +232,7 @@ public class Tweet
             oAuthAccessToken = null;
             oAuthAccessTokenSecret = null;
         }
-    }//END getKeysAndTokens
+    }
 
     private void saveTokenIntoSharedPreferences() {
         editorTwitterToken = spTwitterToken.edit();
@@ -343,101 +285,10 @@ public class Tweet
 
             case R.id.btnUploadPhotoVideo:
                 requestTwoPermissions();
-                showOptionMediaDialog();
+                //ShowMediaOptions smo = new ShowMediaOptions(getApplicationContext());
+                ShowMediaOptions smo = new ShowMediaOptions(Tweet.this);
+                smo.showOptionMediaDialog();
                 break;
-        }
-    }
-
-    public void showOptionMediaDialog(){
-        String[] mediaOptions = {"Select image(s)", "Select a video", "Capture a photo", "Capture a video"};
-
-        /*ImageView image = new ImageView(this);
-        image.setImageResource(R.drawable.twitter);*/
-
-        new MaterialAlertDialogBuilder(this)
-                .setItems(mediaOptions, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int whichOption) {
-                        switch (whichOption){
-                            case SELECT_IMAGES:
-                                if (checkPermissionToReadStorage()){
-                                    uploadPhotos();
-                                }
-                                break;
-                            case SELECT_A_VIDEO:
-                                if (checkPermissionToReadStorage()){
-                                    uploadVideo();
-                                }
-                                break;
-                            case TAKE_A_PHOTO:
-                                if (checkPermissionToTakePhoto()){
-                                    takeOnePhoto();
-                                }
-                                break;
-                            case CAPTURE_A_VIDEO:
-                                if (checkPermissionToTakePhoto()){
-                                    captureOneVideo();
-                                }
-                                break;
-                        }
-                    }
-                })
-                //.setView(image)
-                .show();
-    }
-
-    private void uploadVideo(){
-        Intent videoPickerIntent = new Intent();
-        videoPickerIntent.setType("video/*");
-//        videoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
-        videoPickerIntent.setAction(Intent.ACTION_PICK);
-        startActivityForResult(Intent.createChooser(videoPickerIntent, "Select Video"), RESULT_LOAD_VIDEO);
-    }
-
-    private void uploadPhotos(){
-        Intent photoPickerIntent = new Intent();
-        photoPickerIntent.setType("image/*");
-        photoPickerIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-
-        //We pass an extra array with the accepted mime types. This will ensure only components with these MIME types as targeted.
-        String[] mimeTypes = {"image/jpeg", "image/png"};
-        photoPickerIntent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-
-        //photoPickerIntent.setAction(Intent.ACTION_GET_CONTENT);
-        photoPickerIntent.setAction(Intent.ACTION_PICK);
-        startActivityForResult(Intent.createChooser(photoPickerIntent, "Select Image"), RESULT_LOAD_IMAGE);
-    }
-
-    private void takeOnePhoto(){
-        // Determine a folder to save the captured image
-        File cFolder = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);//DIRECTORY_DCIM
-
-        String fileDate = new SimpleDateFormat(
-                "ddHHmmss", Locale.getDefault()).format(new Date());
-
-        String fileName = String.format("CameraIntent_%s.jpg", fileDate);
-
-        cameraFile = new File(cFolder, fileName);
-
-        // This is not very useful so far...
-        mCapturedImageURI = FileProvider.getUriForFile(
-                Tweet.this,
-                getApplicationContext().getPackageName() + ".fileprovider",
-                cameraFile);
-
-        Intent takeOnePhoto = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        takeOnePhoto.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI);
-
-        if (takeOnePhoto.resolveActivity(getPackageManager()) != null){
-            startActivityForResult(takeOnePhoto, REQUEST_TAKE_PHOTO);
-        }
-    }
-
-    private void captureOneVideo(){
-        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-
-        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
         }
     }
 
@@ -614,53 +465,6 @@ public class Tweet
         }
     }
 
-    // Runtime Permission check
-    private boolean checkPermissionToTakePhoto(){
-
-        int checkPermissionCamera = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA);
-        String whichPermission = "camera";
-
-        if (checkPermissionCamera == PackageManager.PERMISSION_GRANTED)
-        {
-            return true;
-        }
-        // Permission denied
-        else
-        {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)){
-                // User can get the permission via this dialog
-                showInfoDialog(whichPermission);
-            }else{
-                // User cannot send an email anymore unless getting the permission manually in "App setting"
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
-            }
-            return false;
-        }
-    }
-
-    private boolean checkPermissionToReadStorage() {
-
-        int result = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
-        String whichPermission = "read";
-
-        if (result == PackageManager.PERMISSION_GRANTED)
-        {
-            return true;
-        }
-        // Permission denied
-        else
-        {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)){
-                // User can get the permission via this dialog
-                showInfoDialog(whichPermission);
-            }else{
-                // User cannot send an email anymore unless getting the permission manually in "App setting"
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
-            }
-            return false;
-        }
-    }//END checkPermission()
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -672,61 +476,6 @@ public class Tweet
             }
         }
     }
-
-    // After clicking "Yes" on the dialog, you can have a permission request
-    public void showInfoDialog(String whichPermission){
-        if (whichPermission.equals("camera")){
-            new AlertDialog.Builder(this)
-                    //.setTitle("Permission to attach photos and video")
-                    .setMessage("To attach images or video on your tweet, press \"OK\" to get the permissions.")
-                    .setPositiveButton(
-                            "OK",
-                            new DialogInterface.OnClickListener(){
-                                @Override
-                                public void onClick(DialogInterface dialog, int which){
-                                    ActivityCompat.requestPermissions(Tweet.this, new String[]{Manifest.permission.CAMERA}, PERMISSION_REQUEST_CODE);
-                                }
-                            }
-                    )
-                    .setNegativeButton(
-                            "NO",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    Toast.makeText(Tweet.this, getString(R.string.warning_no_permission),
-                                            Toast.LENGTH_LONG).show();
-                                }
-                            }
-                    )
-                    .show();
-        }
-        else if (whichPermission.equals("read"))
-        {
-            new AlertDialog.Builder(this)
-                    .setMessage("To attach images or video on your tweet, press \"OK\" to get the permissions.")
-                    .setPositiveButton(
-                            "OK",
-                            new DialogInterface.OnClickListener(){
-                                @Override
-                                public void onClick(DialogInterface dialog, int which){
-                                    ActivityCompat.requestPermissions(Tweet.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
-                                }
-                            }
-                    )
-                    .setNegativeButton(
-                            "NO",
-                            new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialogInterface, int i) {
-                                    Toast.makeText(Tweet.this, getString(R.string.warning_no_permission),
-                                            Toast.LENGTH_LONG).show();
-                                }
-                            }
-                    )
-                    .show();
-        }
-
-    }//END showInfoDialog
 
     private boolean notOverLetterLimit(){
 
@@ -753,7 +502,7 @@ public class Tweet
 
     private void login() {
         new LoginTwitter().execute();
-    }//END login
+    }
 
     private void clearOutEtTweet(){
         etTweet.setText("");
