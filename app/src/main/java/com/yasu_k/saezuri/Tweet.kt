@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Color
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Bundle
 import android.os.Environment
 import android.provider.DocumentsContract
@@ -19,7 +18,6 @@ import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -62,23 +60,10 @@ class Tweet : AppCompatActivity(), View.OnClickListener {
         val adView = SetAdView(binding.adView, applicationContext)
         adView.initAd()
         setupButtons()
-        val didILogIn = spTwitterToken.getBoolean("login", false)
+        val isUserAlreadyLoggedIn = spTwitterToken.getBoolean("login", false)
+        Log.d(localClassName, "isUserAlreadyLoggedIn = $isUserAlreadyLoggedIn")
 
-        if (didILogIn) {
-            binding.btnLogin.visibility = View.INVISIBLE
-            binding.btnSendTweet.visibility = View.VISIBLE
-            binding.btnLogOut.visibility = View.VISIBLE
-            binding.btnClear.visibility = View.VISIBLE
-            binding.btnUploadPhotoVideo.visibility = View.VISIBLE
-            binding.textInputLayout.visibility = View.VISIBLE
-        } else {
-            binding.btnLogin.visibility = View.VISIBLE
-            binding.btnSendTweet.visibility = View.INVISIBLE
-            binding.btnLogOut.visibility = View.INVISIBLE
-            binding.btnClear.visibility = View.INVISIBLE
-            binding.btnUploadPhotoVideo.visibility = View.INVISIBLE
-            binding.textInputLayout.visibility = View.INVISIBLE
-        }
+        showAndHideLayouts(isUserAlreadyLoggedIn)
 
         //hyperlink
         binding.tvPrivacyPolicy.movementMethod = LinkMovementMethod.getInstance()
@@ -94,7 +79,7 @@ class Tweet : AppCompatActivity(), View.OnClickListener {
                 count: Int
             ) {
                 val textColor: Int
-                val length = 280 - getTextLength(enteredText)
+                val length = 280 - TextCounter().getTextLength(enteredText)
                 if (length < 0) {
                     textColor = Color.RED
                     binding.btnSendTweet.isEnabled = false
@@ -118,24 +103,6 @@ class Tweet : AppCompatActivity(), View.OnClickListener {
         binding.btnLogOut.setOnClickListener(this)
         binding.btnClear.setOnClickListener(this)
         binding.btnUploadPhotoVideo.setOnClickListener(this)
-    }
-
-    private fun getTextLength(enteredText: CharSequence): Int {
-        val writtenText = enteredText.toString()
-        var textLength = 0
-        for (element in writtenText) {
-            val oneChar = element.toString()
-            val utf8Bytes = oneChar.toByteArray(StandardCharsets.UTF_8)
-            val oneCharBytes = utf8Bytes.size
-            if (oneCharBytes == 3) {
-                //Count two if the character is Chinese, Japanese, Korean or Emoji.
-                textLength += 2
-            } else {
-                //Count one if the character is NOT Chinese, Japanese, Korean or Emoji.
-                textLength++
-            }
-        }
-        return textLength
     }
 
     /** Called when leaving the activity  */
@@ -410,7 +377,50 @@ class Tweet : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun login() {
-        LoginTwitter().execute()
+        //LoginTwitter().execute()
+        val scope = CoroutineScope(Dispatchers.Default)
+        scope.launch { loginTwitter() }
+    }
+
+    private suspend fun loginTwitter()
+    {
+        try {
+            // onPreExecuteと同等の処理
+            withContext(Dispatchers.Main) {
+                Log.d(localClassName, "始めます")
+            }
+
+            // doInBackgroundメソッドと同等の処理
+            Thread.sleep(800)
+            //withContext(Dispatchers.Main) {
+            withContext(Dispatchers.IO) {
+                Log.d(localClassName, "Logging in Twitter")
+                LoginInfo.mOauth?.setOAuthConsumer(
+                    LoginInfo.oAuthConsumerKey,
+                    LoginInfo.oAuthConsumerSecret
+                )
+                LoginInfo.mOauth?.oAuthAccessToken = null
+
+                try {
+                    LoginInfo.mRequest =
+                        LoginInfo.mOauth?.getOAuthRequestToken("callback://ReceiveToken") //ReceiveToken will receive user's token for login.
+                    val uri = Uri.parse(LoginInfo.mRequest?.authenticationURL)
+                    val login = Intent(Intent.ACTION_VIEW, uri)
+                    startActivityForResult(login, 0) //Implicit intent to log in on web browser
+                } catch (e: TwitterException) {
+                    e.printStackTrace()
+                }
+            }
+            Thread.sleep(800)
+
+            // onPostExecuteメソッドと同等の処理
+            withContext(Dispatchers.Main) {
+                Log.d(localClassName, "終わります")
+            }
+        } catch (e: Exception) {
+            // onCancelledメソッドと同等の処理
+            Log.e(localClassName, "ここにキャンセル時の処理を記述", e)
+        }
     }
 
     private fun clearOutEtTweet() {
@@ -421,13 +431,13 @@ class Tweet : AppCompatActivity(), View.OnClickListener {
         try {
             //SendTweet(this@Tweet, etTweet).execute(etTweet.text.toString())
             val scope = CoroutineScope(Dispatchers.Default)
-            scope.launch { sampleTask() } // 止めたいときは以下のように scope.coroutineContext.cancelChildren()
+            scope.launch { sendTweet() } // 止めたいときは以下のように scope.coroutineContext.cancelChildren()
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    private suspend fun sampleTask() {
+    private suspend fun sendTweet() {
         try {
             val TAG = "SendTweet"
             var isVideoTooLarge = false
@@ -620,28 +630,6 @@ class Tweet : AppCompatActivity(), View.OnClickListener {
         return cb
     }
 
-    //2nd inner AsyncTask class
-    internal inner class LoginTwitter : AsyncTask<Any?, Any?, Any?>() {
-        override fun doInBackground(objects: Array<Any?>): Any? {
-            LoginInfo.mOauth?.setOAuthConsumer(
-                LoginInfo.oAuthConsumerKey,
-                LoginInfo.oAuthConsumerSecret
-            )
-            LoginInfo.mOauth?.oAuthAccessToken = null
-
-            try {
-                LoginInfo.mRequest =
-                    LoginInfo.mOauth?.getOAuthRequestToken("callback://ReceiveToken") //ReceiveToken will receive user's token for login.
-                val uri = Uri.parse(LoginInfo.mRequest?.authenticationURL)
-                val login = Intent(Intent.ACTION_VIEW, uri)
-                startActivityForResult(login, 0) //Implicit intent to log in on web browser
-            } catch (e: TwitterException) {
-                e.printStackTrace()
-            }
-            return null
-        }
-    }
-
     companion object {
         //@JvmField
         var oAuthAccessToken: String? = null
@@ -673,6 +661,28 @@ class Tweet : AppCompatActivity(), View.OnClickListener {
                 cursor?.close()
             }
             return null
+        }
+    }
+
+    private fun showAndHideLayouts(isUserLoggedIn: Boolean)
+    {
+        if (isUserLoggedIn)
+        {
+            binding.btnLogin.visibility = View.INVISIBLE
+            binding.btnSendTweet.visibility = View.VISIBLE
+            binding.btnLogOut.visibility = View.VISIBLE
+            binding.btnClear.visibility = View.VISIBLE
+            binding.btnUploadPhotoVideo.visibility = View.VISIBLE
+            binding.textInputLayout.visibility = View.VISIBLE
+        }
+        else
+        {
+            binding.btnLogin.visibility = View.VISIBLE
+            binding.btnSendTweet.visibility = View.INVISIBLE
+            binding.btnLogOut.visibility = View.INVISIBLE
+            binding.btnClear.visibility = View.INVISIBLE
+            binding.btnUploadPhotoVideo.visibility = View.INVISIBLE
+            binding.textInputLayout.visibility = View.INVISIBLE
         }
     }
 }
