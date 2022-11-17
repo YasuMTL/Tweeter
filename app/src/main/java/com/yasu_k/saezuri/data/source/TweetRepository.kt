@@ -15,12 +15,9 @@ import com.yasu_k.saezuri.R
 import com.yasu_k.saezuri.data.source.ReceiveTokenRepository.Companion.editorTwitterToken
 import com.yasu_k.saezuri.data.source.ReceiveTokenRepository.Companion.oAuthAccessToken
 import com.yasu_k.saezuri.data.source.ReceiveTokenRepository.Companion.oAuthAccessTokenSecret
-import com.yasu_k.saezuri.data.source.TweetRepository.Companion.getDataColumn
 import com.yasu_k.saezuri.data.source.TweetRepository.Companion.imagesPathList
 import com.yasu_k.saezuri.data.source.TweetRepository.Companion.selectedVideoPath
 import com.yasu_k.saezuri.ui.TweetFragment
-import com.yasu_k.saezuri.ui.binding
-import com.yasu_k.saezuri.ui.spTwitterToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,6 +25,7 @@ import kotlinx.coroutines.withContext
 import twitter4j.StatusUpdate
 import twitter4j.TwitterException
 import twitter4j.TwitterFactory
+import twitter4j.conf.ConfigurationBuilder
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -38,34 +36,32 @@ class TweetRepository {
         var imagesPathList: ArrayList<String?>? = null
         //@JvmField
         var selectedVideoPath: String? = null
-        fun getDataColumn(
-            context: Context, uri: Uri?, selection: String?,
-            selectionArgs: Array<String>?
-        ): String? {
-            var cursor: Cursor? = null
-            val projection = arrayOf(
-                MediaStore.Files.FileColumns.DATA
+    }
+
+    fun getDataColumn(
+        context: Context, uri: Uri?, selection: String?,
+        selectionArgs: Array<String>?
+    ): String? {
+        var cursor: Cursor? = null
+        val projection = arrayOf(
+            MediaStore.Files.FileColumns.DATA
+        )
+        try {
+            cursor = context.contentResolver.query(
+                uri!!, projection, selection, selectionArgs, null
             )
-            try {
-                cursor = context.contentResolver.query(
-                    uri!!, projection, selection, selectionArgs, null
-                )
-                if (cursor != null && cursor.moveToFirst()) {
-                    val cindex = cursor.getColumnIndexOrThrow(projection[0])
-                    println("cursor.getString(cindex): " + cursor.getString(cindex))
-                    return cursor.getString(cindex)
-                }
-            } finally {
-                cursor?.close()
+            if (cursor != null && cursor.moveToFirst()) {
+                val cindex = cursor.getColumnIndexOrThrow(projection[0])
+                println("cursor.getString(cindex): " + cursor.getString(cindex))
+                return cursor.getString(cindex)
             }
-            return null
+        } finally {
+            cursor?.close()
         }
+        return null
     }
 
-    fun sendTweet() {
-
-    }
-
+    //TODO Replace this function with a shared LiveData
     //Retrieve token after the login (for the first time)
     private val twitterKeysAndTokens: Unit
         get() {
@@ -121,7 +117,7 @@ class TweetRepository {
                     val contentUri = ContentUris.withAppendedId(
                         Uri.parse("content://downloads/public_downloads"), id.toLong()
                     )
-                    return TweetFragment.getDataColumn(context, contentUri, null, null)
+                    return getDataColumn(context, contentUri, null, null)
                 }
                 "com.android.providers.media.documents" -> { // MediaProvider
                     val docId = DocumentsContract.getDocumentId(uri)
@@ -132,7 +128,7 @@ class TweetRepository {
                     val selectionArgs = arrayOf(
                         split[1]
                     )
-                    return TweetFragment.getDataColumn(
+                    return getDataColumn(
                         context,
                         contentUri,
                         selection,
@@ -141,7 +137,7 @@ class TweetRepository {
                 }
             }
         } else if ("content".equals(uri.scheme, ignoreCase = true)) { //MediaStore
-            return TweetFragment.getDataColumn(context, uri, null, null)
+            return getDataColumn(context, uri, null, null)
         } else if ("file".equals(uri.scheme, ignoreCase = true)) { // File
             return uri.path
         }
@@ -153,10 +149,10 @@ class TweetRepository {
 
         // Image size <= 5 MB (https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices)
         if (imageFile.length() <= 5000000) {
-            TweetFragment.imagesPathList!!.add(filePath)
+            imagesPathList!!.add(filePath)
         } else {
-            TweetFragment.imagesPathList!!.clear()
-            Toast.makeText(requireContext(), getString(R.string.size_too_large), Toast.LENGTH_LONG).show()
+            imagesPathList!!.clear()
+            //Toast.makeText(requireContext(), getString(R.string.size_too_large), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -165,27 +161,27 @@ class TweetRepository {
 
         //Video file size must not exceed 512 MB (https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices)
         if (fileToCheck.length() > 512000000) {
-            TweetFragment.selectedVideoPath = ""
+            selectedVideoPath = ""
         }
     }
 
-    private fun notOverLetterLimit(): Boolean {
-        val tweetDraft = binding.etTweet.text.toString()
-        val numTweetLetters = tweetDraft.length
-        return numTweetLetters < 141
-    }
+//    private fun notOverLetterLimit(): Boolean {
+//        val tweetDraft = binding.etTweet.text.toString()
+//        val numTweetLetters = tweetDraft.length
+//        return numTweetLetters < 141
+//    }
 
-    private fun tweet() {
-        try {
-            //SendTweet(this@Tweet, etTweet).execute(etTweet.text.toString())
-            val scope = CoroutineScope(Dispatchers.Default)
-            scope.launch { sendTweet() } // 止めたいときは以下のように scope.coroutineContext.cancelChildren()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+//    private fun tweet() {
+//        try {
+//            //SendTweet(this@Tweet, etTweet).execute(etTweet.text.toString())
+//            val scope = CoroutineScope(Dispatchers.Default)
+//            scope.launch { sendTweet() } // 止めたいときは以下のように scope.coroutineContext.cancelChildren()
+//        } catch (e: Exception) {
+//            e.printStackTrace()
+//        }
+//    }
 
-    private suspend fun sendTweet() {
+    suspend fun sendTweet(textTweet: String, configurationBuilder: ConfigurationBuilder) {
         try {
             val TAG = "SendTweet"
             var isVideoTooLarge = false
@@ -196,28 +192,30 @@ class TweetRepository {
 
             // onPreExecuteと同等の処理
             withContext(Dispatchers.Main) {
-                Log.d(localClassName, "始めます")
-                binding.progressBar.visibility = View.VISIBLE
+                Log.d(javaClass.name, "始めます")
+                //binding.progressBar.visibility = View.VISIBLE
             }
 
             // doInBackgroundメソッドと同等の処理
             Thread.sleep(800)
 
             try {
-                val cb = setTwitterKeysAndTokens()
+                //TODO Retrieve the instance from the shared LiveData
+                //val cb = setTwitterKeysAndTokens()
+                val cb = configurationBuilder
                 val twitter = TwitterFactory(cb.build()).instance
 
                 //set text
-                val strTweet = binding.etTweet.text.toString()
-                val status = StatusUpdate(strTweet)
+                //val strTweet = binding.etTweet.text.toString()
+                val status = StatusUpdate(textTweet)
 
                 //set video
-                if (TweetFragment.selectedVideoPath != null) {
+                if (selectedVideoPath != null) {
                     try {
                         // https://ja.stackoverflow.com/questions/28169/android%E3%81%8B%E3%82%89-twitter4j-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%A6%E5%8B%95%E7%94%BB%E3%82%92%E6%8A%95%E7%A8%BF%E3%82%92%E3%81%97%E3%81%9F%E3%81%84
                         var inputStream: FileInputStream?
                         //String path = Environment.getExternalStorageDirectory().toString() + "/video.mp4";
-                        val file = File(TweetFragment.selectedVideoPath!!)
+                        val file = File(selectedVideoPath!!)
                         inputStream = FileInputStream(file)
                         val video = twitter.uploadMediaChunked("video.mp4", inputStream)
                         //https://github.com/Twitter4J/Twitter4J/issues/339
@@ -230,15 +228,15 @@ class TweetRepository {
                     } catch (e: IOException) {
                         e.printStackTrace()
                     }
-                } else if (TweetFragment.imagesPathList!!.size > 4) {
+                } else if (imagesPathList!!.size > 4) {
                     uploadedMoreThan4Images = true
-                } else if (TweetFragment.imagesPathList!!.size >= 1) {
+                } else if (imagesPathList!!.size >= 1) {
                     println("Uploading image(s)...")
                     //upload multiple image files (4 files at most)
-                    val mediaIds = LongArray(TweetFragment.imagesPathList!!.size)
+                    val mediaIds = LongArray(imagesPathList!!.size)
                     for (i in mediaIds.indices) {
-                        println("imagesPathList.get(i): " + TweetFragment.imagesPathList!![i])
-                        val image = File(TweetFragment.imagesPathList!![i])
+                        println("imagesPathList.get(i): " + imagesPathList!![i])
+                        val image = File(imagesPathList!![i])
                         println("image.length(): " + image.length())
                         val media = twitter.uploadMedia(image)
                         println("media.getImageType(): " + media.imageType + " media.getSize(): " + media.size)
@@ -278,85 +276,88 @@ class TweetRepository {
 
             // onPostExecuteメソッドと同等の処理
             withContext(Dispatchers.Main) {
-                Log.d(localClassName, "終わります")
-                binding.progressBar.visibility = View.GONE
+                Log.d(javaClass.name, "終わります")
+                //binding.progressBar.visibility = View.GONE
 
                 //Handling error
                 if (statusCode == 200)
                 {
-                    Toast.makeText(
-                        applicationContext,
-                        getString(R.string.tweet_sent_success),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    clearOutEtTweet()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        getString(R.string.tweet_sent_success),
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+                    //clearOutEtTweet()
                 }
                 else if (statusCode == 503)
                 {
-                    Toast.makeText(
-                        applicationContext,
-                        getString(R.string.twitter_unavailable),
-                        Toast.LENGTH_LONG
-                    ).show()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        getString(R.string.twitter_unavailable),
+//                        Toast.LENGTH_LONG
+//                    ).show()
                 }
                 else if (statusCode == 403)
                 {
                     when (errorCode)
                     {
-                        170 -> Toast.makeText(
+                        //170 ->
+                            /*Toast.makeText(
                             applicationContext,
                             getString(R.string.no_text_to_tweet),
                             Toast.LENGTH_SHORT
-                        ).show()
+                        ).show()*/
 
-                        193 -> Toast.makeText(
+                        //193 ->
+                         /*Toast.makeText(
                             applicationContext,
                             getString(R.string.media_is_too_large),
                             Toast.LENGTH_LONG
-                        ).show()
+                        ).show()*/
 
-                        -1 -> Toast.makeText(
+                        //-1 ->
+                        /*Toast.makeText(
                             applicationContext,
                             getString(R.string.unknown_error),
                             Toast.LENGTH_LONG
-                        ).show()
+                        ).show()*/
 
                         else -> {}
                     }
                 }
                 else if (statusCode == 400)
                 {
-                    Toast.makeText(
-                        applicationContext,
-                        getString(R.string.request_invalid),
-                        Toast.LENGTH_SHORT
-                    ).show()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        getString(R.string.request_invalid),
+//                        Toast.LENGTH_SHORT
+//                    ).show()
                 }
                 else if (uploadedMoreThan4Images)
                 {
-                    Toast.makeText(
-                        applicationContext,
-                        getString(R.string.four_images_at_most),
-                        Toast.LENGTH_SHORT
-                    ).show()
+//                    Toast.makeText(
+//                        applicationContext,
+//                        getString(R.string.four_images_at_most),
+//                        Toast.LENGTH_SHORT
+//                    ).show()
                 }
                 else
                 {
-                    Toast.makeText(applicationContext, getString(R.string.unknown_error), Toast.LENGTH_SHORT)
-                        .show()
+//                    Toast.makeText(applicationContext, getString(R.string.unknown_error), Toast.LENGTH_SHORT)
+//                        .show()
                 }
             }
         }
         catch (e: Exception)
         {
             // onCancelledメソッドと同等の処理
-            Log.e(localClassName, "ここにキャンセル時の処理を記述", e)
+            Log.e(javaClass.name, "ここにキャンセル時の処理を記述", e)
             binding.progressBar.visibility = View.GONE
         }
     }
 
     private fun flushOutUploadedImageVideo() {
-        TweetFragment.imagesPathList!!.clear()
-        TweetFragment.selectedVideoPath = null
+        imagesPathList!!.clear()
+        selectedVideoPath = null
     }
 }

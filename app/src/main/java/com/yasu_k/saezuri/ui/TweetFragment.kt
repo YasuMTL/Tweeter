@@ -24,19 +24,13 @@ import com.yasu_k.saezuri.databinding.FragmentTweetBinding
 import twitter4j.auth.OAuthAuthorization
 import twitter4j.conf.ConfigurationContext
 
-private var _binding: FragmentTweetBinding? = null
-private val binding get() = _binding!!
-
 private var mAdView: AdView? = null
 
 class TweetFragment : Fragment(), View.OnClickListener {
 
-    private val viewModel: TweetViewModel by activityViewModels()//Scoped to the activity rather than the current fragment
-
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        setHasOptionsMenu(true)
-//    }
+    private var _binding: FragmentTweetBinding? = null
+    private val binding get() = _binding!!
+    private val sharedViewModel: TweetViewModel by activityViewModels()//Scoped to the activity rather than the current fragment
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,40 +50,45 @@ class TweetFragment : Fragment(), View.OnClickListener {
         adView.initAd()
         setupButtons()
 
+        binding.apply {
+            viewModel = sharedViewModel
+            //hyperlink
+            tvPrivacyPolicy.movementMethod = LinkMovementMethod.getInstance()
+
+
+
+            etTweet.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(
+                    enteredText: CharSequence,
+                    start: Int,
+                    before: Int,
+                    count: Int
+                ) {
+                    val textColor: Int
+                    val length = 280 - TextCounter().getTextLength(enteredText)
+                    if (length < 0) {
+                        textColor = Color.RED
+                        binding.btnSendTweet.isEnabled = false
+                        binding.btnSendTweet.setTextColor(Color.GRAY)
+                    } else {
+                        textColor = Color.GRAY
+                        binding.btnSendTweet.isEnabled = true
+                        binding.btnSendTweet.setTextColor(Color.WHITE)
+                    }
+                    binding.tvTweetTextCount.setTextColor(textColor)
+                    binding.tvTweetTextCount.text = length.toString()
+                }
+
+                override fun afterTextChanged(s: Editable) {}
+            })
+        }
+
         //TODO: Create a global variable to know if the user is logged in or not
         //showAndHideLayouts(isUserAlreadyLoggedIn)
 
-        //hyperlink
-        binding.tvPrivacyPolicy.movementMethod = LinkMovementMethod.getInstance()
-
         imagesPathList = ArrayList()
         LoginInfo.mOauth = OAuthAuthorization(ConfigurationContext.getInstance())
-
-        binding.etTweet.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(
-                enteredText: CharSequence,
-                start: Int,
-                before: Int,
-                count: Int
-            ) {
-                val textColor: Int
-                val length = 280 - TextCounter().getTextLength(enteredText)
-                if (length < 0) {
-                    textColor = Color.RED
-                    binding.btnSendTweet.isEnabled = false
-                    binding.btnSendTweet.setTextColor(Color.GRAY)
-                } else {
-                    textColor = Color.GRAY
-                    binding.btnSendTweet.isEnabled = true
-                    binding.btnSendTweet.setTextColor(Color.WHITE)
-                }
-                binding.tvTweetTextCount.setTextColor(textColor)
-                binding.tvTweetTextCount.text = length.toString()
-            }
-
-            override fun afterTextChanged(s: Editable) {}
-        })
     }
 
     override fun onDestroyView() {
@@ -135,11 +134,11 @@ class TweetFragment : Fragment(), View.OnClickListener {
         when (view.id) {
             R.id.btnLogin -> {
                 //checkIfILoggedIn()
-                viewModel.login()
+                sharedViewModel.login()
             }
-            R.id.btnSendTweet -> viewModel.sendTweet()
+            R.id.btnSendTweet -> sharedViewModel.sendTweet(binding.etTweet.text.toString(), sharedViewModel.configurationBuilder.value)
             R.id.btnLogOut -> {
-                viewModel.logout()
+                sharedViewModel.logout()
                 //TODO Change some layout
 //                val redirect = Intent(this@Tweet, Tweet::class.java)
 //                startActivity(redirect)
@@ -152,81 +151,6 @@ class TweetFragment : Fragment(), View.OnClickListener {
             }
         }
     }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == AppCompatActivity.RESULT_OK) {
-            try {
-                if (requestCode == Code.RESULT_LOAD_IMAGE) {
-                    if (null != data) {
-                        var imagePath: String?
-                        if (data.data != null) {
-                            //When an image is picked
-                            val mImageUri = data.data
-                            imagePath = getPathFromUri(requireContext(), mImageUri)
-                            sizePhotoCheck(imagePath)
-                        } else {
-                            //When multiple images are picked
-                            if (data.clipData != null) {
-                                println("++data: " + data.clipData!!.itemCount) // Get count of image here.
-                                for (i in 0 until data.clipData!!.itemCount) {
-                                    val selectedImage = data.clipData!!.getItemAt(i).uri
-                                    //String type list which contains file path of each selected image file
-                                    imagePath = getPathFromUri(requireContext(), selectedImage)
-                                    sizePhotoCheck(imagePath)
-                                    println("selectedImage: $selectedImage")
-                                }
-                            }
-                        }
-                        println("data.getData(): " + data.data)
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.not_picked_images),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } else if (requestCode == Code.RESULT_LOAD_VIDEO) {
-                    val selectedImageUri = data!!.data
-
-                    // MEDIA GALLERY
-                    selectedVideoPath = getPathFromUri(requireContext(), selectedImageUri)
-                    sizeVideoCheck(selectedVideoPath)
-                } else if (requestCode == Code.REQUEST_VIDEO_CAPTURE) {
-                    val newVideoUri = data!!.data
-
-                    // MEDIA GALLERY
-                    selectedVideoPath = getPathFromUri(requireContext(), newVideoUri)
-                    sizeVideoCheck(selectedVideoPath)
-                } else if (requestCode == Code.REQUEST_TAKE_PHOTO) {
-                    if (MediaOptions.cameraFile != null) {
-                        //registerDatabase(cameraFile);
-                        println("cameraFile: " + MediaOptions.cameraFile)
-                        println("cameraFile.getAbsolutePath(): " + MediaOptions.cameraFile!!.absolutePath)
-                        println("mCapturedImageURI: " + MediaOptions.mCapturedImageURI)
-                        println("mCapturedImageURI.getAuthority(): " + (MediaOptions.mCapturedImageURI?.authority))
-                        val imagePath = MediaOptions.cameraFile!!.absolutePath
-                        if (MediaOptions.cameraFile!!.length() <= 5000000) {
-                            imagesPathList!!.add(imagePath)
-                        } else {
-                            imagesPathList!!.clear()
-                            Toast.makeText(
-                                requireContext(),
-                                getString(R.string.size_too_large),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    } else {
-                        Toast.makeText(requireContext(), getString(R.string.fail_photo), Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(requireContext(), getString(R.string.attach_fail), Toast.LENGTH_SHORT).show()
-            }
-        }
-    } //END onActivityResult()
 
 
 
