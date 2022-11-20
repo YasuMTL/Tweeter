@@ -29,6 +29,10 @@ class TweetViewModel(
         twitterRepository.logout()
     }
 
+    fun isLoggedIn(): Boolean {
+        return configurationBuilder.value != null
+    }
+
     fun sendTweet(textTweet: String, configurationBuilder: ConfigurationBuilder) {
         viewModelScope.launch {
             twitterRepository.sendTweet(textTweet, configurationBuilder)

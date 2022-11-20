@@ -8,19 +8,7 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
-import android.view.View
-import android.widget.Toast
-import androidx.core.content.ContentProviderCompat.requireContext
-import com.yasu_k.saezuri.R
-import com.yasu_k.saezuri.data.source.ReceiveTokenRepository.Companion.editorTwitterToken
-import com.yasu_k.saezuri.data.source.ReceiveTokenRepository.Companion.oAuthAccessToken
-import com.yasu_k.saezuri.data.source.ReceiveTokenRepository.Companion.oAuthAccessTokenSecret
-import com.yasu_k.saezuri.data.source.TweetRepository.Companion.imagesPathList
-import com.yasu_k.saezuri.data.source.TweetRepository.Companion.selectedVideoPath
-import com.yasu_k.saezuri.ui.TweetFragment
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import twitter4j.StatusUpdate
 import twitter4j.TwitterException
@@ -63,7 +51,7 @@ class TweetRepository {
 
     //TODO Replace this function with a shared LiveData
     //Retrieve token after the login (for the first time)
-    private val twitterKeysAndTokens: Unit
+    /*private val twitterKeysAndTokens: Unit
         get() {
             //Retrieve token after the login (for the first time)
             if (intent.getStringExtra("token") != null) {
@@ -75,9 +63,9 @@ class TweetRepository {
                 TweetFragment.oAuthAccessToken = null
                 TweetFragment.oAuthAccessTokenSecret = null
             }
-        }
+        }*/
 
-    private fun saveTokenIntoSharedPreferences() {
+    /*private fun saveTokenIntoSharedPreferences() {
         TweetFragment.editorTwitterToken = spTwitterToken.edit()
         TweetFragment.oAuthAccessToken = intent.getStringExtra("token")
         TweetFragment.editorTwitterToken.putString("token", TweetFragment.oAuthAccessToken)
@@ -86,13 +74,13 @@ class TweetRepository {
             TweetFragment.oAuthAccessTokenSecret
         )
         TweetFragment.editorTwitterToken.apply()
-    }
+    }*/
 
-    private fun checkIfILoggedIn() {
+    /*private fun checkIfILoggedIn() {
         TweetFragment.editorTwitterToken = spTwitterToken.edit()
         TweetFragment.editorTwitterToken.putBoolean("login", true)
         TweetFragment.editorTwitterToken.apply()
-    }
+    }*/
 
     private fun getPathFromUri(context: Context, uri: Uri?): String? {
         //boolean isAfterKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
@@ -352,7 +340,7 @@ class TweetRepository {
         {
             // onCancelledメソッドと同等の処理
             Log.e(javaClass.name, "ここにキャンセル時の処理を記述", e)
-            binding.progressBar.visibility = View.GONE
+            //binding.progressBar.visibility = View.GONE
         }
     }
 

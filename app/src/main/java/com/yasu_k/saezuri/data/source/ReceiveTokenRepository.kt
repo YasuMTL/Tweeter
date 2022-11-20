@@ -19,9 +19,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import twitter4j.TwitterException
 import twitter4j.conf.ConfigurationBuilder
-import javax.inject.Inject
 
-@Inject
+//@Inject
 lateinit var spTwitterToken: SharedPreferences
 
 class ReceiveTokenRepository {

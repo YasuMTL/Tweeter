@@ -1,7 +1,6 @@
 package com.yasu_k.saezuri.ui
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -12,14 +11,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.gms.ads.AdView
 import com.yasu_k.saezuri.*
 import com.yasu_k.saezuri.data.source.TweetRepository.Companion.imagesPathList
-import com.yasu_k.saezuri.data.source.TweetRepository.Companion.selectedVideoPath
 import com.yasu_k.saezuri.databinding.FragmentTweetBinding
 import twitter4j.auth.OAuthAuthorization
 import twitter4j.conf.ConfigurationContext
@@ -54,8 +51,6 @@ class TweetFragment : Fragment(), View.OnClickListener {
             viewModel = sharedViewModel
             //hyperlink
             tvPrivacyPolicy.movementMethod = LinkMovementMethod.getInstance()
-
-
 
             etTweet.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -136,14 +131,25 @@ class TweetFragment : Fragment(), View.OnClickListener {
                 //checkIfILoggedIn()
                 sharedViewModel.login()
             }
-            R.id.btnSendTweet -> sharedViewModel.sendTweet(binding.etTweet.text.toString(), sharedViewModel.configurationBuilder.value)
+
+            R.id.btnSendTweet -> {
+                if (sharedViewModel.isLoggedIn()) {
+                    sharedViewModel.sendTweet(
+                            binding.etTweet.text.toString(),
+                            sharedViewModel.configurationBuilder.value!!
+                    )
+                }
+            }
+
             R.id.btnLogOut -> {
                 sharedViewModel.logout()
                 //TODO Change some layout
 //                val redirect = Intent(this@Tweet, Tweet::class.java)
 //                startActivity(redirect)
             }
+
             R.id.btnClear -> clearOutEtTweet()
+
             R.id.btnUploadPhotoVideo -> {
                 requestTwoPermissions()
                 val smo = ShowMediaOptions(requireContext())

@@ -1,20 +1,13 @@
 package com.yasu_k.saezuri.ui
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.yasu_k.saezuri.R
 import com.yasu_k.saezuri.databinding.FragmentReceiveTokenBinding
-import com.yasu_k.saezuri.databinding.FragmentTweetBinding
 
-/**
- * A simple [Fragment] subclass.
- * Use the [ReceiveTokenFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class ReceiveTokenFragment : Fragment() {
     private var _binding: FragmentReceiveTokenBinding? = null
     private val binding get() = _binding!!
