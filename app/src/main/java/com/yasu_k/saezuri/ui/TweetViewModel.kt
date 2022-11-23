@@ -1,9 +1,7 @@
 package com.yasu_k.saezuri.ui
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import android.content.Context
+import androidx.lifecycle.*
 import com.yasu_k.saezuri.data.source.ReceiveTokenRepository
 import com.yasu_k.saezuri.data.source.TweetRepository
 import com.yasu_k.saezuri.data.source.TwitterRepository
@@ -11,8 +9,8 @@ import kotlinx.coroutines.launch
 import twitter4j.conf.ConfigurationBuilder
 
 class TweetViewModel(
-    private val tweetRepository: TweetRepository,
-    private val receiveTokenRepository: ReceiveTokenRepository
+    tweetRepository: TweetRepository,
+    receiveTokenRepository: ReceiveTokenRepository
 ) : ViewModel() {
 
     private val _configurationBuilder = MutableLiveData<ConfigurationBuilder>()
@@ -21,8 +19,8 @@ class TweetViewModel(
     //TODO: Use Dependency Injection later
     private val twitterRepository = TwitterRepository(tweetRepository, receiveTokenRepository)
 
-    fun login() {
-        twitterRepository.login()
+    fun login(context: Context, scope: LifecycleCoroutineScope) {
+        twitterRepository.login(context, scope)
     }
 
     fun logout() {
@@ -41,5 +39,18 @@ class TweetViewModel(
 
     fun setConfigurationBuilder(configBuilder: ConfigurationBuilder) {
         _configurationBuilder.value = configBuilder
+    }
+}
+
+class TweetViewModelFactory(
+    private val tweetRepository: TweetRepository,
+    private val receiveTokenRepository: ReceiveTokenRepository
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if(modelClass.isAssignableFrom(TweetViewModel::class.java)){
+            @Suppress("UNCHECKED_CAST")
+            return TweetViewModel(tweetRepository = tweetRepository, receiveTokenRepository = receiveTokenRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

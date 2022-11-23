@@ -33,13 +33,13 @@ class ReceiveToken : AppCompatActivity() {
                 e.printStackTrace()
             }
         } //END if
-        val btnBackToTweet = findViewById<Button>(R.id.btnBackToTweet)
-        btnBackToTweet.setOnClickListener {
-            val backToTweet = Intent(this@ReceiveToken, Tweet::class.java)
-            backToTweet.putExtra("token", token)
-            backToTweet.putExtra("tokenSecret", tokenSecret)
-            startActivity(backToTweet)
-        }
+//        val btnBackToTweet = findViewById<Button>(R.id.btnBackToTweet)
+//        btnBackToTweet.setOnClickListener {
+//            val backToTweet = Intent(this@ReceiveToken, Tweet::class.java)
+//            backToTweet.putExtra("token", token)
+//            backToTweet.putExtra("tokenSecret", tokenSecret)
+//            startActivity(backToTweet)
+//        }
     }
 
     internal inner class fetchTwitterToken : AsyncTask<Any?, Any?, Any?>() {

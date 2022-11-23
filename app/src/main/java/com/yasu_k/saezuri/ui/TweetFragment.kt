@@ -1,6 +1,7 @@
 package com.yasu_k.saezuri.ui
 
 import android.Manifest
+import android.app.Dialog
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -14,8 +15,11 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.ads.AdView
 import com.yasu_k.saezuri.*
+import com.yasu_k.saezuri.data.source.ReceiveTokenRepository
+import com.yasu_k.saezuri.data.source.TweetRepository
 import com.yasu_k.saezuri.data.source.TweetRepository.Companion.imagesPathList
 import com.yasu_k.saezuri.databinding.FragmentTweetBinding
 import twitter4j.auth.OAuthAuthorization
@@ -27,7 +31,14 @@ class TweetFragment : Fragment(), View.OnClickListener {
 
     private var _binding: FragmentTweetBinding? = null
     private val binding get() = _binding!!
-    private val sharedViewModel: TweetViewModel by activityViewModels()//Scoped to the activity rather than the current fragment
+
+    private val tweetRepository = TweetRepository()
+    private val receiveTokenRepository = ReceiveTokenRepository()
+
+    private val sharedViewModel: TweetViewModel by activityViewModels {
+        TweetViewModelFactory(tweetRepository, receiveTokenRepository)
+    }
+    lateinit var twitterDialog: Dialog
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -86,15 +97,10 @@ class TweetFragment : Fragment(), View.OnClickListener {
         LoginInfo.mOauth = OAuthAuthorization(ConfigurationContext.getInstance())
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
     private fun setupButtons() {
         binding.apply {
             btnSendTweet.setOnClickListener(this@TweetFragment)
-            btnLogin.setOnClickListener(this@TweetFragment)
+            //btnLogin.setOnClickListener(this@TweetFragment)
             btnLogOut.setOnClickListener(this@TweetFragment)
             btnClear.setOnClickListener(this@TweetFragment)
             btnUploadPhotoVideo.setOnClickListener(this@TweetFragment)
@@ -129,14 +135,14 @@ class TweetFragment : Fragment(), View.OnClickListener {
         when (view.id) {
             R.id.btnLogin -> {
                 //checkIfILoggedIn()
-                sharedViewModel.login()
+                sharedViewModel.login(requireContext(), lifecycleScope)
             }
 
             R.id.btnSendTweet -> {
                 if (sharedViewModel.isLoggedIn()) {
                     sharedViewModel.sendTweet(
-                            binding.etTweet.text.toString(),
-                            sharedViewModel.configurationBuilder.value!!
+                        binding.etTweet.text.toString(),
+                        sharedViewModel.configurationBuilder.value!!
                     )
                 }
             }
@@ -157,8 +163,6 @@ class TweetFragment : Fragment(), View.OnClickListener {
             }
         }
     }
-
-
 
     // Runtime Permission check
     private fun requestTwoPermissions() {
@@ -204,7 +208,7 @@ class TweetFragment : Fragment(), View.OnClickListener {
         if (isUserLoggedIn)
         {
             binding.apply {
-                btnLogin.visibility = View.INVISIBLE
+                //btnLogin.visibility = View.INVISIBLE
                 btnSendTweet.visibility = View.VISIBLE
                 btnLogOut.visibility = View.VISIBLE
                 btnClear.visibility = View.VISIBLE
@@ -215,7 +219,7 @@ class TweetFragment : Fragment(), View.OnClickListener {
         else
         {
             binding.apply {
-                btnLogin.visibility = View.VISIBLE
+                //btnLogin.visibility = View.VISIBLE
                 btnSendTweet.visibility = View.INVISIBLE
                 btnLogOut.visibility = View.INVISIBLE
                 btnClear.visibility = View.INVISIBLE
@@ -223,5 +227,10 @@ class TweetFragment : Fragment(), View.OnClickListener {
                 textInputLayout.visibility = View.INVISIBLE
             }
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

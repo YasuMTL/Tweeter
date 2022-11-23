@@ -28,13 +28,13 @@
                 android:text="@string/logout"
                 android:drawableLeft="@drawable/sharp_exit_to_app_white_18" />
 
-            <Button
-                android:id="@+id/btnLogin"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                android:drawableLeft="@drawable/sharp_login_white_18"
-                android:text="@string/login" />
+<!--            <Button-->
+<!--                android:id="@+id/btnLogin"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_margin="4dp"-->
+<!--                android:drawableLeft="@drawable/sharp_login_white_18"-->
+<!--                android:text="@string/login" />-->
 
         </LinearLayout>
 
