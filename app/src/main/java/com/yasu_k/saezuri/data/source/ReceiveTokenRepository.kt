@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.app.Dialog
 import android.content.Context
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -15,7 +14,13 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.yasu_k.saezuri.LoginInfo
+import com.yasu_k.saezuri.LoginInfo.oAuthConsumerKey
+import com.yasu_k.saezuri.LoginInfo.oAuthConsumerSecret
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import twitter4j.Twitter
 import twitter4j.TwitterFactory
 import twitter4j.auth.AccessToken
@@ -23,69 +28,55 @@ import twitter4j.conf.ConfigurationBuilder
 
 //@Inject
 //lateinit var spTwitterToken: SharedPreferences
+data class TokenState(
+    val accessToken: AccessToken? = null
+)
 
 class ReceiveTokenRepository {
 
     lateinit var twitter: Twitter
     lateinit var twitterDialog: Dialog
     var accToken: AccessToken? = null
-
-    init {
-//        val isUserAlreadyLoggedIn = spTwitterToken.getBoolean("login", false)
-//        Log.d(javaClass.name, "isUserAlreadyLoggedIn = $isUserAlreadyLoggedIn")
-    }
-
-    companion object {
-        //@JvmField
-        var oAuthAccessToken: String? = null
-        //@JvmField
-        var oAuthAccessTokenSecret: String? = null
-        lateinit var editorTwitterToken: SharedPreferences.Editor
-    }
+    private val _accTokenState = MutableStateFlow(TokenState())
+    val accTokenState: StateFlow<TokenState> = _accTokenState.asStateFlow()
 
     fun logout() {
         val TAG = "logout()"
         Log.d(TAG, "--------------- START ---------------")
-//        editorTwitterToken = spTwitterToken.edit()
-//        editorTwitterToken.putBoolean("login", false)
-//        editorTwitterToken.putString("token", null)
-//        editorTwitterToken.putString("tokenSecret", null)
-//        editorTwitterToken.apply()
-        //Toast.makeText(this, getString(R.string.logout_success), Toast.LENGTH_SHORT).show()
         Log.d(TAG, "--------------- END ---------------")
     }
 
-    /*fun login() {
-        CoroutineScope(Dispatchers.Default).launch {
-            //loginTwitter()
-        }
-    }*/
+    fun getRequestToken(
+        context: Context,
+        scope: LifecycleCoroutineScope
+    )
+    = scope.launch(Dispatchers.Default) {
+        val builder = ConfigurationBuilder()
+            .setDebugEnabled(true)
+            .setOAuthConsumerKey(oAuthConsumerKey)
+            .setOAuthConsumerSecret(oAuthConsumerSecret)
+            .setIncludeEmailEnabled(true)
+        val config = builder.build()
+        val factory = TwitterFactory(config)
+        twitter = factory.instance
 
-    fun getRequestToken(context: Context, scope: LifecycleCoroutineScope) {
-        scope.launch(Dispatchers.Default) {
-            val builder = ConfigurationBuilder()
-                .setDebugEnabled(true)
-                .setOAuthConsumerKey(LoginInfo.oAuthConsumerKey)
-                .setOAuthConsumerSecret(LoginInfo.oAuthConsumerSecret)
-                .setIncludeEmailEnabled(true)
-            val config = builder.build()
-            val factory = TwitterFactory(config)
-            twitter = factory.instance
-
-            try {
-                val requestToken = twitter.oAuthRequestToken
-                withContext(Dispatchers.Main) {
-                    setupTwitterWebviewDialog(requestToken.authorizationURL, context, scope)
-                }
-            } catch (e: IllegalStateException) {
-                Log.e("ERROR: ", e.toString())
+        try {
+            val requestToken = twitter.oAuthRequestToken
+            withContext(Dispatchers.Main) {
+                setupTwitterWebviewDialog(requestToken.authorizationURL, context, scope)
             }
+        } catch (e: IllegalStateException) {
+            Log.e("ERROR: ", e.toString())
         }
     }
 
     // Show twitter login page in a dialog
     @SuppressLint("SetJavaScriptEnabled")
-    fun setupTwitterWebviewDialog(url: String, context: Context, scope: LifecycleCoroutineScope) {
+    fun setupTwitterWebviewDialog(
+        url: String,
+        context: Context,
+        scope: LifecycleCoroutineScope
+    ) {
         twitterDialog = Dialog(context)
         val webView = WebView(context)
 
@@ -105,10 +96,21 @@ class ReceiveTokenRepository {
         val uri = Uri.parse(url)
         val oauthVerifier = uri.getQueryParameter("oauth_verifier") ?: ""
 
-        scope.launch(Dispatchers.Main) {
-            accToken =
-                withContext(Dispatchers.IO) { twitter.getOAuthAccessToken(oauthVerifier) }
-            getUserProfile()
+        if (oauthVerifier.isNotEmpty()) {
+            scope.launch(Dispatchers.IO) {
+                accToken =
+                    withContext(Dispatchers.IO) { twitter.getOAuthAccessToken(oauthVerifier) }
+                if (accToken == null) {
+                    _accTokenState.update {
+                        it.copy(accessToken = null)
+                    }
+                } else {
+                    _accTokenState.update {
+                        it.copy(accessToken = accToken)
+                    }
+                }
+                getUserProfile()
+            }
         }
     }
 
@@ -132,12 +134,6 @@ class ReceiveTokenRepository {
         Log.d("Twitter Profile URL: ", twitterProfilePic)
         // Twitter Access Token
         Log.d("Twitter Access Token", accToken?.token ?: "")
-
-        //TODO: Save the Access Token (accToken.token) and Access Token Secret (accToken.tokenSecret) using SharedPreferences
-        // This will allow us to check user's logging state every time they open the app after cold start.
-//        val sharedPref = this.getPreferences(Context.MODE_PRIVATE)
-//        sharedPref.edit().putString("oauth_token",accToken?.token ?: "").apply()
-//        sharedPref.edit().putString("oauth_token_secret",accToken?.tokenSecret ?: "").apply()
     }
 
     inner class TwitterWebViewClient(private val scope: LifecycleCoroutineScope) : WebViewClient() {

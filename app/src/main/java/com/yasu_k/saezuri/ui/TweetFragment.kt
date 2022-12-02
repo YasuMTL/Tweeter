@@ -1,7 +1,6 @@
 package com.yasu_k.saezuri.ui
 
 import android.Manifest
-import android.app.Dialog
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
@@ -11,17 +10,19 @@ import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.findNavController
 import com.google.android.gms.ads.AdView
 import com.yasu_k.saezuri.*
+import com.yasu_k.saezuri.data.SettingDataStore
 import com.yasu_k.saezuri.data.source.ReceiveTokenRepository
 import com.yasu_k.saezuri.data.source.TweetRepository
 import com.yasu_k.saezuri.data.source.TweetRepository.Companion.imagesPathList
 import com.yasu_k.saezuri.databinding.FragmentTweetBinding
+import kotlinx.coroutines.launch
 import twitter4j.auth.OAuthAuthorization
 import twitter4j.conf.ConfigurationContext
 
@@ -36,9 +37,12 @@ class TweetFragment : Fragment(), View.OnClickListener {
     private val receiveTokenRepository = ReceiveTokenRepository()
 
     private val sharedViewModel: TweetViewModel by activityViewModels {
-        TweetViewModelFactory(tweetRepository, receiveTokenRepository)
+        TweetViewModelFactory(tweetRepository, receiveTokenRepository, SettingDataStore)
     }
-    lateinit var twitterDialog: Dialog
+
+    private val SettingDataStore: SettingDataStore by lazy {
+        SettingDataStore(requireContext())
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,6 +66,13 @@ class TweetFragment : Fragment(), View.OnClickListener {
             viewModel = sharedViewModel
             //hyperlink
             tvPrivacyPolicy.movementMethod = LinkMovementMethod.getInstance()
+
+            btnLogOut.setOnClickListener {
+                sharedViewModel.clearTokenInfoFromPreferenceStore(requireContext())
+                val action =
+                    TweetFragmentDirections.actionTweetFragmentToReceiveTokenFragment()
+                root.findNavController().navigate(action)
+            }
 
             etTweet.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -100,7 +111,6 @@ class TweetFragment : Fragment(), View.OnClickListener {
     private fun setupButtons() {
         binding.apply {
             btnSendTweet.setOnClickListener(this@TweetFragment)
-            //btnLogin.setOnClickListener(this@TweetFragment)
             btnLogOut.setOnClickListener(this@TweetFragment)
             btnClear.setOnClickListener(this@TweetFragment)
             btnUploadPhotoVideo.setOnClickListener(this@TweetFragment)
@@ -135,23 +145,20 @@ class TweetFragment : Fragment(), View.OnClickListener {
         when (view.id) {
             R.id.btnLogin -> {
                 //checkIfILoggedIn()
-                sharedViewModel.login(requireContext(), lifecycleScope)
-            }
-
-            R.id.btnSendTweet -> {
-                if (sharedViewModel.isLoggedIn()) {
-                    sharedViewModel.sendTweet(
-                        binding.etTweet.text.toString(),
-                        sharedViewModel.configurationBuilder.value!!
-                    )
+                lifecycleScope.launch {
+                    sharedViewModel.login(requireContext(), lifecycleScope)
                 }
             }
 
+            R.id.btnSendTweet -> sharedViewModel.sendTweet(binding.etTweet.text.toString())
+
             R.id.btnLogOut -> {
                 sharedViewModel.logout()
-                //TODO Change some layout
-//                val redirect = Intent(this@Tweet, Tweet::class.java)
-//                startActivity(redirect)
+                lifecycleScope.launch {
+                    SettingDataStore.saveLoginInfoToPreferencesStore(isLoggedInManager = false, requireContext())
+                }
+                val action = TweetFragmentDirections.actionTweetFragmentToReceiveTokenFragment()
+                binding.root.findNavController().navigate(action)
             }
 
             R.id.btnClear -> clearOutEtTweet()
@@ -185,48 +192,8 @@ class TweetFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == Code.PERMISSION_REQUEST_CODE) {
-            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                //Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT).show();
-                Toast.makeText(requireContext(), getString(R.string.need_permission), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
     private fun clearOutEtTweet() {
         binding.etTweet.setText("")
-    }
-
-    private fun showAndHideLayouts(isUserLoggedIn: Boolean)
-    {
-        if (isUserLoggedIn)
-        {
-            binding.apply {
-                //btnLogin.visibility = View.INVISIBLE
-                btnSendTweet.visibility = View.VISIBLE
-                btnLogOut.visibility = View.VISIBLE
-                btnClear.visibility = View.VISIBLE
-                btnUploadPhotoVideo.visibility = View.VISIBLE
-                textInputLayout.visibility = View.VISIBLE
-            }
-        }
-        else
-        {
-            binding.apply {
-                //btnLogin.visibility = View.VISIBLE
-                btnSendTweet.visibility = View.INVISIBLE
-                btnLogOut.visibility = View.INVISIBLE
-                btnClear.visibility = View.INVISIBLE
-                btnUploadPhotoVideo.visibility = View.INVISIBLE
-                textInputLayout.visibility = View.INVISIBLE
-            }
-        }
     }
 
     override fun onDestroyView() {
