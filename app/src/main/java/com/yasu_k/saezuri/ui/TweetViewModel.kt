@@ -1,7 +1,10 @@
 package com.yasu_k.saezuri.ui
 
+import android.content.ContentResolver
 import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.*
 import com.yasu_k.saezuri.data.SettingDataStore
 import com.yasu_k.saezuri.data.source.ReceiveTokenRepository
@@ -10,6 +13,7 @@ import com.yasu_k.saezuri.data.source.TwitterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class LoginUiState(
     val isLoggedIn: Boolean = false,
@@ -99,12 +103,15 @@ class TweetViewModel(
         return uiState.value.isLoggedIn
     }
 
-    fun sendTweet(textTweet: String/*, configurationBuilder: ConfigurationBuilder*/) {
-        viewModelScope.launch(Dispatchers.IO) {
-            twitterRepository.sendTweet(textTweet, uiState.value.token, uiState.value.tokenSecret)
-            //TODO After sending a tweet successfully, clear out the edit text widget
-            Log.i(TAG, "The tweet was sent successfully")
-        }
+//    fun sendTweet(textTweet: String, contentResolver: ContentResolver): Int {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            return twitterRepository.sendTweet(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver)
+//            //TODO After sending a tweet successfully, clear out the edit text widget
+//            //Log.i(TAG, "The tweet was sent successfully")
+//        }
+//    }
+    suspend fun sendTweet(textTweet: String, contentResolver: ContentResolver): Int = withContext(Dispatchers.IO){
+        return@withContext twitterRepository.sendTweet(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver)
     }
 
     fun saveLoginStateToPreferenceStore(loginState: Boolean, context: Context) {
@@ -142,6 +149,9 @@ class TweetViewModel(
 //            Log.i(TAG, "Use is still logged in!")
 //        }
     }
+
+    fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){ twitterRepository.takeOnePhoto(context, launcher) }
+    fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ twitterRepository.takeOneVideo(context, launcher) }
 }
 
 class TweetViewModelFactory(

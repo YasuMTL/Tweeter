@@ -1,5 +1,6 @@
 package com.yasu_k.saezuri.data.source
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
@@ -8,6 +9,9 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
+import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import twitter4j.StatusUpdate
@@ -15,15 +19,42 @@ import twitter4j.TwitterException
 import twitter4j.TwitterFactory
 import twitter4j.conf.ConfigurationBuilder
 import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
 
 class TweetRepository {
 
     companion object {
-        var imagesPathList: ArrayList<String?>? = null
+        val imagesPathList = arrayListOf<String>()
         //@JvmField
-        var selectedVideoPath: String? = null
+        var selectedVideoPath = ""
+    }
+
+    init {
+        imagesPathList.clear()
+    }
+
+    private lateinit var takenPhotoUri: Uri
+    private lateinit var takenVideoUri: Uri
+
+    private fun checkImagePathListState(){
+        val size = imagesPathList.size
+        println("TweetRepository")
+        println("imagesPathList.size = $size")
+        println("imagesPathList = $imagesPathList")
+    }
+
+    fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){
+        takenPhotoUri = ImageFileHelper.getImageUri(context = context)
+        launcher.launch(takenPhotoUri)
+
+        sizePhotoCheck(takenPhotoUri.toString())
+    }
+
+    fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){
+        takenVideoUri = ImageFileHelper.getVideoUri(context = context)
+        launcher.launch(takenVideoUri)
+
+        sizeVideoCheck(takenVideoUri.toString())
     }
 
     fun getDataColumn(
@@ -49,38 +80,25 @@ class TweetRepository {
         return null
     }
 
-    //TODO Replace this function with a shared LiveData
-    //Retrieve token after the login (for the first time)
-    /*private val twitterKeysAndTokens: Unit
-        get() {
-            //Retrieve token after the login (for the first time)
-            if (intent.getStringExtra("token") != null) {
-                saveTokenIntoSharedPreferences()
-            } else if (spTwitterToken.contains("token")) {
-                TweetFragment.oAuthAccessToken = spTwitterToken.getString("token", "")
-                TweetFragment.oAuthAccessTokenSecret = spTwitterToken.getString("tokenSecret", "")
-            } else {
-                TweetFragment.oAuthAccessToken = null
-                TweetFragment.oAuthAccessTokenSecret = null
-            }
-        }*/
-
-    /*private fun saveTokenIntoSharedPreferences() {
-        TweetFragment.editorTwitterToken = spTwitterToken.edit()
-        TweetFragment.oAuthAccessToken = intent.getStringExtra("token")
-        TweetFragment.editorTwitterToken.putString("token", TweetFragment.oAuthAccessToken)
-        TweetFragment.oAuthAccessTokenSecret = intent.getStringExtra("tokenSecret")
-        TweetFragment.editorTwitterToken.putString("tokenSecret",
-            TweetFragment.oAuthAccessTokenSecret
-        )
-        TweetFragment.editorTwitterToken.apply()
-    }*/
-
-    /*private fun checkIfILoggedIn() {
-        TweetFragment.editorTwitterToken = spTwitterToken.edit()
-        TweetFragment.editorTwitterToken.putBoolean("login", true)
-        TweetFragment.editorTwitterToken.apply()
-    }*/
+//    private fun requestTwoPermissions(context: Context) {
+//        // If at least one of two permissions isn't yet granted
+//        if (ActivityCompat.checkSelfPermission(
+//                ContentProviderCompat.requireContext(),
+//                Manifest.permission.READ_EXTERNAL_STORAGE
+//            ) != PackageManager.PERMISSION_GRANTED ||
+//            ActivityCompat.checkSelfPermission(
+//                ContentProviderCompat.requireContext(),
+//                Manifest.permission.CAMERA
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {
+//            ActivityCompat.requestPermissions(
+//                context, arrayOf(
+//                    Manifest.permission.READ_EXTERNAL_STORAGE,
+//                    Manifest.permission.CAMERA
+//                ), Code.PERMISSION_REQUEST_CODE
+//            )
+//        }
+//    }
 
     private fun getPathFromUri(context: Context, uri: Uri?): String? {
         //boolean isAfterKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
@@ -132,24 +150,35 @@ class TweetRepository {
         return null
     }
 
-    private fun sizePhotoCheck(filePath: String?) {
+    private fun sizePhotoCheck(filePath: String) {
+        println("sizePhotoCheck() is called")
+        println("filePath = $filePath")
+
+        checkImagePathListState()
         val imageFile = File(filePath)
 
         // Image size <= 5 MB (https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices)
         if (imageFile.length() <= 5000000) {
-            imagesPathList!!.add(filePath)
+            imagesPathList.add(filePath)
+            println("Image is small enough to attach to the tweet")
+            checkImagePathListState()
         } else {
-            imagesPathList!!.clear()
+            imagesPathList.clear()
             //Toast.makeText(requireContext(), getString(R.string.size_too_large), Toast.LENGTH_LONG).show()
+            println("Image is too large to attach to the tweet")
         }
+        println("sizePhotoCheck() comes to an end")
     }
 
-    private fun sizeVideoCheck(filePath: String?) {
+    private fun sizeVideoCheck(filePath: String) {
         val fileToCheck = File(filePath)
 
         //Video file size must not exceed 512 MB (https://developer.twitter.com/en/docs/media/upload-media/uploading-media/media-best-practices)
         if (fileToCheck.length() > 512000000) {
             selectedVideoPath = ""
+        } else {
+            selectedVideoPath = filePath
+            println("selectedVideoPath = $filePath")
         }
     }
 
@@ -159,23 +188,48 @@ class TweetRepository {
 //        return numTweetLetters < 141
 //    }
 
-//    private fun tweet() {
-//        try {
-//            //SendTweet(this@Tweet, etTweet).execute(etTweet.text.toString())
-//            val scope = CoroutineScope(Dispatchers.Default)
-//            scope.launch { sendTweet() } // 止めたいときは以下のように scope.coroutineContext.cancelChildren()
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//        }
+//    private fun takeOnePhoto(takenPhotoUri: Uri) {
+//        // Determine a folder to save the captured image
+//        val cFolder = mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) //DIRECTORY_DCIM
+//        val fileDate = SimpleDateFormat(
+//            "ddHHmmss", Locale.getDefault()
+//        ).format(Date())
+//        val fileName = String.format("CameraIntent_%s.jpg", fileDate)
+//        cameraFile = File(cFolder, fileName)
+//
+//        // This is not very useful so far...
+//        mCapturedImageURI = FileProvider.getUriForFile(
+//            (mContext as Activity),
+//            mContext.packageName + ".fileprovider",
+//            cameraFile!!
+//        )
+//
+//        //"ACTION_IMAGE_CAPTURE" with not granted CAMERA permission will result in SecurityException
+//        val takeOnePhoto = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//        takeOnePhoto.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI)
+//        val resolveActivity = takeOnePhoto.resolveActivity(mContext.packageManager)
+//        //if (resolveActivity != null) {
+//            (mContext as Activity).startActivityForResult(takeOnePhoto, REQUEST_TAKE_PHOTO)
+//        //}
+        //takeImageResult.launch("image/*")
+        //(mContext as Fragment).
+
+//        takeImageResult.launch(takenPhotoUri)
+//        Log.i(javaClass.name, "takeOnePhoto has been executed! : takenPhotoUri = $takenPhotoUri")
 //    }
 
-    suspend fun sendTweet(textTweet: String, configurationBuilder: ConfigurationBuilder) {
+    suspend fun sendTweet(textTweet: String,
+                      configurationBuilder: ConfigurationBuilder,
+                      contentResolver: ContentResolver
+    ): Int {
+        var statusCode = 0
+
         try {
             val TAG = "SendTweet"
             var isVideoTooLarge = false
             var uploadedMoreThan4Images = false
             var didIUploadNothing = false
-            var statusCode = 0
+            //var statusCode = 0
             var errorCode = 0
 
             // onPreExecuteと同等の処理
@@ -185,50 +239,76 @@ class TweetRepository {
             }
 
             // doInBackgroundメソッドと同等の処理
-            Thread.sleep(800)
+            //Thread.sleep(800)
+//            sizePhotoCheck(takenPhotoUri.path!!)
+//            //sizePhotoCheck(takenPhotoUri.toString())
+//            println("takenPhotoUri was checked before attaching it to the tweet")
+//            println("takenPhotoUri = $takenPhotoUri")
+//            println("takenPhotoUri.path = ${takenPhotoUri.path}")
+
+            checkImagePathListState()
 
             try {
-                //TODO Retrieve the instance from the shared LiveData
-                //val cb = setTwitterKeysAndTokens()
-                val cb = configurationBuilder
-                val twitter = TwitterFactory(cb.build()).instance
-
-                //set text
-                //val strTweet = binding.etTweet.text.toString()
+                val twitter = TwitterFactory(configurationBuilder.build()).instance
                 val status = StatusUpdate(textTweet)
 
                 //set video
-                if (selectedVideoPath != null) {
+                if (selectedVideoPath.isNotEmpty()) {
                     try {
                         // https://ja.stackoverflow.com/questions/28169/android%E3%81%8B%E3%82%89-twitter4j-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%A6%E5%8B%95%E7%94%BB%E3%82%92%E6%8A%95%E7%A8%BF%E3%82%92%E3%81%97%E3%81%9F%E3%81%84
-                        var inputStream: FileInputStream?
+                        //val inputStream: FileInputStream?
                         //String path = Environment.getExternalStorageDirectory().toString() + "/video.mp4";
-                        val file = File(selectedVideoPath!!)
-                        inputStream = FileInputStream(file)
+                        //val uriFile = imagesPathList[i].toUri()
+                        val uriVideoFile = selectedVideoPath.toUri()
+                        println("uriVideoFile = $uriVideoFile")
+                        //TODO Decide what to do if the file is empty
+
+                        val inputStream = contentResolver.openInputStream(uriVideoFile)
+                            ?: throw Exception("inputStream is empty")
+                        //todo: Need to check the size of input stream
+
+//                        val file = File(selectedVideoPath)
+//                        inputStream = FileInputStream(file)
                         val video = twitter.uploadMediaChunked("video.mp4", inputStream)
                         //https://github.com/Twitter4J/Twitter4J/issues/339
                         status.setMediaIds(video.mediaId)
                         println("Uploading a video...")
-                        inputStream.close()
+                        withContext(Dispatchers.IO) {
+                            inputStream.close()
+                        }
                     } catch (e: OutOfMemoryError) {
                         e.printStackTrace()
                         isVideoTooLarge = true
                     } catch (e: IOException) {
                         e.printStackTrace()
                     }
-                } else if (imagesPathList!!.size > 4) {
+                } else if (imagesPathList.size > 4) {
                     uploadedMoreThan4Images = true
-                } else if (imagesPathList!!.size >= 1) {
+                } else if (imagesPathList.size >= 1) {
                     println("Uploading image(s)...")
                     //upload multiple image files (4 files at most)
-                    val mediaIds = LongArray(imagesPathList!!.size)
+                    val mediaIds = LongArray(imagesPathList.size)
                     for (i in mediaIds.indices) {
-                        println("imagesPathList.get(i): " + imagesPathList!![i])
-                        val image = File(imagesPathList!![i])
-                        println("image.length(): " + image.length())
-                        val media = twitter.uploadMedia(image)
+                        println("imagesPathList.get(i): " + imagesPathList[i])
+//                        val image = File(imagesPathList!![i])
+//                        println("image.length(): " + image.length())
+                        val uriPhotoFile = imagesPathList[i].toUri()
+                        println("uriPhotoFile = $uriPhotoFile")
+                        //TODO Decide what to do if the file is empty
+
+                        val inputStream = contentResolver.openInputStream(uriPhotoFile)
+                            ?: continue//Should use break?
+                        //todo: Need to check the size of input stream
+
+                        val fileName = "image_$i"
+                        val media = twitter.uploadMedia(fileName, inputStream)
                         println("media.getImageType(): " + media.imageType + " media.getSize(): " + media.size)
                         mediaIds[i] = media.mediaId
+
+                        withContext(Dispatchers.IO) {
+                            inputStream.close()
+                            println("Closing inputStream...")
+                        }
                     }
                     status.setMediaIds(*mediaIds)
                 } else {
@@ -265,75 +345,6 @@ class TweetRepository {
             // onPostExecuteメソッドと同等の処理
             withContext(Dispatchers.Main) {
                 Log.d(javaClass.name, "終わります")
-                //binding.progressBar.visibility = View.GONE
-
-                //Handling error
-                if (statusCode == 200)
-                {
-//                    Toast.makeText(
-//                        applicationContext,
-//                        getString(R.string.tweet_sent_success),
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-                    //clearOutEtTweet()
-                }
-                else if (statusCode == 503)
-                {
-//                    Toast.makeText(
-//                        applicationContext,
-//                        getString(R.string.twitter_unavailable),
-//                        Toast.LENGTH_LONG
-//                    ).show()
-                }
-                else if (statusCode == 403)
-                {
-                    when (errorCode)
-                    {
-                        //170 ->
-                            /*Toast.makeText(
-                            applicationContext,
-                            getString(R.string.no_text_to_tweet),
-                            Toast.LENGTH_SHORT
-                        ).show()*/
-
-                        //193 ->
-                         /*Toast.makeText(
-                            applicationContext,
-                            getString(R.string.media_is_too_large),
-                            Toast.LENGTH_LONG
-                        ).show()*/
-
-                        //-1 ->
-                        /*Toast.makeText(
-                            applicationContext,
-                            getString(R.string.unknown_error),
-                            Toast.LENGTH_LONG
-                        ).show()*/
-
-                        else -> {}
-                    }
-                }
-                else if (statusCode == 400)
-                {
-//                    Toast.makeText(
-//                        applicationContext,
-//                        getString(R.string.request_invalid),
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-                }
-                else if (uploadedMoreThan4Images)
-                {
-//                    Toast.makeText(
-//                        applicationContext,
-//                        getString(R.string.four_images_at_most),
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-                }
-                else
-                {
-//                    Toast.makeText(applicationContext, getString(R.string.unknown_error), Toast.LENGTH_SHORT)
-//                        .show()
-                }
             }
         }
         catch (e: Exception)
@@ -342,10 +353,48 @@ class TweetRepository {
             Log.e(javaClass.name, "ここにキャンセル時の処理を記述", e)
             //binding.progressBar.visibility = View.GONE
         }
+
+        return statusCode
     }
 
     private fun flushOutUploadedImageVideo() {
-        imagesPathList!!.clear()
-        selectedVideoPath = null
+        imagesPathList.clear()
+        selectedVideoPath = ""
+    }
+}
+
+object ImageFileHelper {
+    fun getImageUri(context: Context): Uri {
+        val directory = File(context.cacheDir, "images")
+
+        directory.mkdirs()
+        val file = File.createTempFile(
+            "captured_image_",
+            ".jpg",
+            directory,
+        )
+        val authority = context.packageName + ".fileprovider"
+        return FileProvider.getUriForFile(
+            context,
+            authority,
+            file,
+        )
+    }
+
+    fun getVideoUri(context: Context): Uri {
+        val directory = File(context.cacheDir, "video")
+
+        directory.mkdirs()
+        val file = File.createTempFile(
+            "captured_video_",
+            ".mp4",
+            directory,
+        )
+        val authority = context.packageName + ".fileprovider"
+        return FileProvider.getUriForFile(
+            context,
+            authority,
+            file,
+        )
     }
 }

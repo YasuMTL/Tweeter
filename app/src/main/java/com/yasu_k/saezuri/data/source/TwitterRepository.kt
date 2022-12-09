@@ -1,6 +1,9 @@
 package com.yasu_k.saezuri.data.source
 
+import android.content.ContentResolver
 import android.content.Context
+import android.net.Uri
+import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.yasu_k.saezuri.LoginInfo
 import com.yasu_k.saezuri.data.SettingDataStore
@@ -28,8 +31,8 @@ class TwitterRepository(
         receiveTokenRepository.logout()
     }
 
-    suspend fun sendTweet(textTweet: String, token: String, tokenSecret: String){
-        tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret))
+    suspend fun sendTweet(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver): Int {
+        return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
     }
 
     suspend fun saveLoginStateToPreferencesStore(loginState: Boolean, context: Context) {
@@ -55,4 +58,7 @@ class TwitterRepository(
     suspend fun removeTokenSecretFromPreferencesStore(context: Context) {
         dataStore.removeTokenSecretFromPreferencesStore(context)
     }
+
+    fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOnePhoto(context, launcher) }
+    fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOneVideo(context, launcher) }
 }

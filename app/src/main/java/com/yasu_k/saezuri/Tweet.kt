@@ -17,11 +17,12 @@ class Tweet : AppCompatActivity() {
         //(application as MyApplication).appComponent.inject(this)//Dagger2
 
         super.onCreate(savedInstanceState)
-        //val binding = ActivityTweet
         setContentView(R.layout.tweet)
+
         // Get the navigation host fragment from this Activity
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+
         // Instantiate the navController using the NavHostFragment
         navController = navHostFragment.navController
 

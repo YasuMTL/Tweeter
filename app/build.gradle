@@ -43,6 +43,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     //https://android.jlelse.eu/material-design-for-android-523996401fc1
     implementation "com.google.android.material:material:1.8.0-alpha03"
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.assertj:assertj-core:3.10.0'
     testImplementation 'org.robolectric:robolectric:4.8.1'
@@ -54,6 +55,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
 
     implementation 'org.twitter4j:twitter4j-core:4.0.7'
+    //implementation 'org.twitter4j:twitter4j-core:4.1.2'
     implementation 'com.google.android.gms:play-services-ads:21.3.0'
     implementation "androidx.core:core-ktx:1.9.0"
 
@@ -62,6 +64,7 @@ dependencies {
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4' // 最新版(2020.1.19)
     implementation "androidx.activity:activity-ktx:1.6.1"
+    implementation "androidx.fragment:fragment-ktx:1.5.4"
 
     def nav_version = "2.5.3"
     def lifecycle_version = "2.5.1"

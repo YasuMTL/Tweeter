@@ -52,16 +52,22 @@ class ReceiveTokenRepository {
     )
     = scope.launch(Dispatchers.Default) {
         val builder = ConfigurationBuilder()
+        //val twitter = Twitter.newBuilder()
+//            .prettyDebugEnabled(true)
+//            .oAuthConsumer(oAuthConsumerKey, oAuthConsumerSecret)
+//            .build()
             .setDebugEnabled(true)
             .setOAuthConsumerKey(oAuthConsumerKey)
             .setOAuthConsumerSecret(oAuthConsumerSecret)
             .setIncludeEmailEnabled(true)
         val config = builder.build()
         val factory = TwitterFactory(config)
+//        val factory = Twitter.newBuilder()
         twitter = factory.instance
 
         try {
             val requestToken = twitter.oAuthRequestToken
+            //val requestToken = twitter.
             withContext(Dispatchers.Main) {
                 setupTwitterWebviewDialog(requestToken.authorizationURL, context, scope)
             }
