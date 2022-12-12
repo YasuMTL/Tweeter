@@ -82,7 +82,6 @@ class TweetFragment : Fragment(),
     }
 
     private val takeVideoResult = registerForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
-    //private val takeVideoResult = registerForActivityResult(CaptureVideoWithUriContract()) { success ->
         Log.i(javaClass.name, "success = $success" /*url = $uri"*/)
         if (!success) {
             Toast.makeText(requireContext(), "Video was not captured for some reason", Toast.LENGTH_SHORT).show()
@@ -107,26 +106,6 @@ class TweetFragment : Fragment(),
         @Suppress("AutoBoxing")
         override fun parseResult(resultCode: Int, intent: Intent?): Pair<Boolean, Uri> {
             return (resultCode == Activity.RESULT_OK) to imageUri
-        }
-    }
-
-    class CaptureVideoWithUriContract : ActivityResultContract<Uri, Pair<Boolean, Uri>>() {
-        private lateinit var videoUri: Uri
-
-        @CallSuper
-        override fun createIntent(context: Context, input: Uri): Intent {
-            videoUri = input
-            return Intent(MediaStore.ACTION_VIDEO_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, input)
-        }
-
-        override fun getSynchronousResult(
-            context: Context,
-            input: Uri
-        ): SynchronousResult<Pair<Boolean, Uri>>? = null
-
-        @Suppress("AutoBoxing")
-        override fun parseResult(resultCode: Int, intent: Intent?): Pair<Boolean, Uri> {
-            return (resultCode == Activity.RESULT_OK) to videoUri
         }
     }
 
