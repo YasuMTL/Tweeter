@@ -35,6 +35,11 @@ class TwitterRepository(
         return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
     }
 
+    suspend fun sendTweetWithChosenUri(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver, uri: Uri): Int {
+        tweetRepository.setUri(uri)
+        return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
+    }
+
     suspend fun saveLoginStateToPreferencesStore(loginState: Boolean, context: Context) {
         dataStore.saveLoginInfoToPreferencesStore(loginState, context)
     }

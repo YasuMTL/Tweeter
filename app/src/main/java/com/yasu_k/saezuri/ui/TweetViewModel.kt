@@ -43,25 +43,13 @@ class TweetViewModel(
             if (testIsLoggedIn) {
                 _uiState.update {
                     it.copy(
-                        testIsLoggedIn,
-                        dataStore.preferenceTokenFlow.first(),
-                        dataStore.preferenceTokenSecretFlow.first()
+                        isLoggedIn = testIsLoggedIn,
+                        token = dataStore.preferenceTokenFlow.first(),
+                        tokenSecret = dataStore.preferenceTokenSecretFlow.first()
                     )
                 }
                 Log.i(TAG, "Update completed. uiState.value: ${uiState.value}")
             }
-
-//            dataStore.preferenceIsLoggedInFlow.collect { storedLoginState ->
-//                if (storedLoginState) {
-//                    _uiState.update {
-//                        it.copy(
-//                            isLoggedIn = storedLoginState,
-//                            token = dataStore.preferenceTokenFlow.asLiveData().value ?: "",
-//                            tokenSecret = dataStore.preferenceTokenSecretFlow.asLiveData().value ?: ""
-//                        )
-//                    }
-//                }
-//            }
 
             receiveTokenRepository.accTokenState.collect { tokenState ->
                 val token = tokenState.accessToken?.token ?: ""
@@ -103,15 +91,12 @@ class TweetViewModel(
         return uiState.value.isLoggedIn
     }
 
-//    fun sendTweet(textTweet: String, contentResolver: ContentResolver): Int {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            return twitterRepository.sendTweet(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver)
-//            //TODO After sending a tweet successfully, clear out the edit text widget
-//            //Log.i(TAG, "The tweet was sent successfully")
-//        }
-//    }
     suspend fun sendTweet(textTweet: String, contentResolver: ContentResolver): Int = withContext(Dispatchers.IO){
         return@withContext twitterRepository.sendTweet(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver)
+    }
+
+    suspend fun sendTweetWithChosenUri(textTweet: String, contentResolver: ContentResolver, uri: Uri): Int = withContext(Dispatchers.IO){
+        return@withContext twitterRepository.sendTweetWithChosenUri(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver, uri)
     }
 
     fun saveLoginStateToPreferenceStore(loginState: Boolean, context: Context) {
@@ -136,18 +121,14 @@ class TweetViewModel(
     }
 
     fun clearTokenInfoFromPreferenceStore(context: Context) {
-        //if(!uiState.value.isLoggedIn){
-            viewModelScope.launch {
-                twitterRepository.apply {
-                    removeLoginStateFromPreferencesStore(context)
-                    removeTokenFromPreferencesStore(context)
-                    removeTokenSecretFromPreferencesStore(context)
-                }
-                Log.i(TAG, "Clear out store data from preference")
+        viewModelScope.launch {
+            twitterRepository.apply {
+                removeLoginStateFromPreferencesStore(context)
+                removeTokenFromPreferencesStore(context)
+                removeTokenSecretFromPreferencesStore(context)
             }
-//        } else {
-//            Log.i(TAG, "Use is still logged in!")
-//        }
+            Log.i(TAG, "Clear out store data from preference")
+        }
     }
 
     fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){ twitterRepository.takeOnePhoto(context, launcher) }

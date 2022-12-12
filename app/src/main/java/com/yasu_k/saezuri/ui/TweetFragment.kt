@@ -51,10 +51,10 @@ class TweetFragment : Fragment(),
     private val receiveTokenRepository = ReceiveTokenRepository()
 
     private val sharedViewModel: TweetViewModel by activityViewModels {
-        TweetViewModelFactory(tweetRepository, receiveTokenRepository, SettingDataStore)
+        TweetViewModelFactory(tweetRepository, receiveTokenRepository, settingDataStore)
     }
 
-    private val SettingDataStore: SettingDataStore by lazy {
+    private val settingDataStore: SettingDataStore by lazy {
         SettingDataStore(requireContext())
     }
 
@@ -62,11 +62,13 @@ class TweetFragment : Fragment(),
         MutableLiveData()
     }
 
-    //    val takeImageResult: ActivityResultLauncher<Uri> = registerForActivityResult(
-//        ActivityResultContracts.TakePicture()) { success ->
-//        Log.i(javaClass.name, "success = $success")
-//        sizePhotoCheck(tempUri?.path)
-//    }
+    private var chosenUri: Uri? = null
+    private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        println("uri = $uri")
+        chosenUri = uri
+        //TODO: How to pass in this "uri" in order to send a tweet?
+    }
+
     //val takeImageResult = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
     private val takeImageResult = registerForActivityResult(TakePictureWithUriContract()) { (success, uri) ->
         Log.i(javaClass.name, "success = $success, uri = $uri")
@@ -84,17 +86,11 @@ class TweetFragment : Fragment(),
         Log.i(javaClass.name, "success = $success" /*url = $uri"*/)
         if (!success) {
             Toast.makeText(requireContext(), "Video was not captured for some reason", Toast.LENGTH_SHORT).show()
-//            val indexOfLastElement = imagesPathList.size - 1
-//            imagesPathList.removeAt(indexOfLastElement)
-//            val message = "Last element (URI) of the imagesPathList was eliminated"
-//            println(message)
-//            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
 
     //test
     class TakePictureWithUriContract : ActivityResultContract<Uri, Pair<Boolean, Uri>>() {
-
         private lateinit var imageUri: Uri
 
         @CallSuper
@@ -115,7 +111,6 @@ class TweetFragment : Fragment(),
     }
 
     class CaptureVideoWithUriContract : ActivityResultContract<Uri, Pair<Boolean, Uri>>() {
-
         private lateinit var videoUri: Uri
 
         @CallSuper
@@ -134,7 +129,6 @@ class TweetFragment : Fragment(),
             return (resultCode == Activity.RESULT_OK) to videoUri
         }
     }
-
 
     lateinit var tempUri: Uri
 
@@ -197,10 +191,6 @@ class TweetFragment : Fragment(),
             })
         }
 
-        //TODO: Create a global variable to know if the user is logged in or not
-        //showAndHideLayouts(isUserAlreadyLoggedIn)
-
-        //imagesPathList = ArrayList()
         LoginInfo.mOauth = OAuthAuthorization(ConfigurationContext.getInstance())
 
         statusCode.observe(viewLifecycleOwner) { code ->
@@ -313,14 +303,27 @@ class TweetFragment : Fragment(),
 
             R.id.btnSendTweet -> {
                 lifecycleScope.launch {
-                    statusCode.value = sharedViewModel.sendTweet(binding.etTweet.text.toString(), requireContext().contentResolver)
+                    if (chosenUri == null) {
+                        statusCode.value =
+                            sharedViewModel.sendTweet(
+                                binding.etTweet.text.toString(),
+                                requireContext().contentResolver
+                            )
+                    } else {
+                        statusCode.value =
+                            sharedViewModel.sendTweetWithChosenUri(
+                                binding.etTweet.text.toString(),
+                                requireContext().contentResolver,
+                                chosenUri!!
+                            )
+                    }
                 }
             }
 
             R.id.btnLogOut -> {
                 sharedViewModel.logout()
                 lifecycleScope.launch {
-                    SettingDataStore.saveLoginInfoToPreferencesStore(isLoggedInManager = false, requireContext())
+                    settingDataStore.saveLoginInfoToPreferencesStore(isLoggedInManager = false, requireContext())
                 }
                 val action = TweetFragmentDirections.actionTweetFragmentToReceiveTokenFragment()
                 binding.root.findNavController().navigate(action)
@@ -343,27 +346,6 @@ class TweetFragment : Fragment(),
         }
     }
 
-    // Runtime Permission check
-//    private fun requestTwoPermissions() {
-//        // If at least one of two permissions isn't yet granted
-//        if (ActivityCompat.checkSelfPermission(
-//                requireContext(),
-//                Manifest.permission.READ_EXTERNAL_STORAGE
-//            ) != PackageManager.PERMISSION_GRANTED ||
-//            ActivityCompat.checkSelfPermission(
-//                requireContext(),
-//                Manifest.permission.CAMERA
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {
-//            ActivityCompat.requestPermissions(
-//                requireActivity(), arrayOf(
-//                    Manifest.permission.READ_EXTERNAL_STORAGE,
-//                    Manifest.permission.CAMERA
-//                ), Code.PERMISSION_REQUEST_CODE
-//            )
-//        }
-//    }
-
     private fun clearOutEtTweet() {
         binding.etTweet.setText("")
     }
@@ -377,13 +359,13 @@ class TweetFragment : Fragment(),
         when (whichOption) {
             Option.SELECT_IMAGES -> {
                 Toast.makeText(requireContext(), "Choose photos!", Toast.LENGTH_SHORT).show()
-
+                getContent.launch("image/*")
             }
             Option.SELECT_ONE_VIDEO -> {
                 Toast.makeText(requireContext(), "Pick up a video!", Toast.LENGTH_SHORT).show()
+                getContent.launch("video/*")
             }
             Option.TAKE_ONE_PHOTO -> {
-                //TODO: Call a function to take a photo from the view model instance
                 Toast.makeText(requireContext(), "Take one photo!", Toast.LENGTH_SHORT).show()
                 sharedViewModel.takeOnePhoto(requireContext(), takeImageResult)
             }

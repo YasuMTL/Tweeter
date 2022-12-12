@@ -71,12 +71,6 @@ class MediaDialogFragment : DialogFragment() {
         return inflater.inflate(R.layout.fragment_dialog, container, false)
     }
 
-//    override fun onActivityCreated(savedInstanceState: Bundle?) {
-//        super.onActivityCreated(savedInstanceState)
-//        viewModel = ViewModelProvider(this).get(DialogViewModel::class.java)
-//        // TODO: Use the ViewModel
-//    }
-
     // Override the Fragment.onAttach() method to instantiate the NoticeDialogListener
     override fun onAttach(context: Context) {
         super.onAttach(context)

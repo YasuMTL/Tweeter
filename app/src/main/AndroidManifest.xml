@@ -32,16 +32,16 @@
                 android:resource="@xml/provider_path"/>
         </provider>
 
-        <activity android:name="com.yasu_k.saezuri.ReceiveToken"
-            android:launchMode="singleInstance"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="callback"/>
-            </intent-filter>
-        </activity>
+<!--        <activity android:name="com.yasu_k.saezuri.ReceiveToken"-->
+<!--            android:launchMode="singleInstance"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.VIEW"/>-->
+<!--                <category android:name="android.intent.category.DEFAULT"/>-->
+<!--                <category android:name="android.intent.category.BROWSABLE"/>-->
+<!--                <data android:scheme="callback"/>-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
         <activity android:name="com.yasu_k.saezuri.Tweet"
             android:exported="true"
             android:hardwareAccelerated="true">
