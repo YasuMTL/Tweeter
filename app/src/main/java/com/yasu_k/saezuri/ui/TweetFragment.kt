@@ -302,6 +302,8 @@ class TweetFragment : Fragment(),
             }
 
             R.id.btnSendTweet -> {
+                binding.indeterminateBar.visibility = View.VISIBLE
+
                 lifecycleScope.launch {
                     if (chosenUri == null) {
                         statusCode.value =
@@ -310,12 +312,14 @@ class TweetFragment : Fragment(),
                                 requireContext().contentResolver
                             )
                     } else {
+                        Toast.makeText(requireContext(), "Uploading...", Toast.LENGTH_LONG).show()
                         statusCode.value =
                             sharedViewModel.sendTweetWithChosenUri(
                                 binding.etTweet.text.toString(),
                                 requireContext().contentResolver,
                                 chosenUri!!
                             )
+                        chosenUri = null
                     }
                 }
             }
@@ -348,6 +352,7 @@ class TweetFragment : Fragment(),
 
     private fun clearOutEtTweet() {
         binding.etTweet.setText("")
+        binding.indeterminateBar.visibility = View.GONE
     }
 
     override fun onDestroyView() {
