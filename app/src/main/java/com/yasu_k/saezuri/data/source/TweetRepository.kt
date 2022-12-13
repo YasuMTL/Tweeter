@@ -10,11 +10,13 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import twitter4j.StatusUpdate
+import twitter4j.Twitter
 import twitter4j.TwitterException
 import twitter4j.TwitterFactory
 import twitter4j.conf.ConfigurationBuilder
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 
 class TweetRepository {
 
@@ -84,16 +86,30 @@ class TweetRepository {
         }
     }
 
-    fun setUri(uri: Uri){
-        if (uri.toString().contains("image", true)) {
-            imagesPathList.add(uri.toString())
-            println("Image URI is set!")
-        } else {
-            selectedVideoPath = uri.toString()
-            println("Video URI is set!")
+    fun setUri(chosenURIs: MutableList<Uri>){
+        chosenURIs.forEach { uri ->
+            if (uri.toString().contains("image", true)) {
+                imagesPathList.add(uri.toString())
+                println("Image URI is set!")
+            } else if (uri.toString().contains("jpg", true)) {
+                imagesPathList.add(uri.toString())
+                println("Image URI is set!")
+            } else {
+                selectedVideoPath = uri.toString()
+                println("Video URI is set!")
+            }
         }
     }
 
+    /**
+     * Upload media file(s), send the tweet and return a status code
+     *
+     * @param textTweet the message to tweet
+     * @param configurationBuilder to instantiate a Twitter object
+     * @param contentResolver to pick up media file(s)
+     * @return a status code
+     * @since 2020
+     */
     suspend fun sendTweet(textTweet: String,
                       configurationBuilder: ConfigurationBuilder,
                       contentResolver: ContentResolver
@@ -102,86 +118,28 @@ class TweetRepository {
 
         try {
             val TAG = "SendTweet"
-            var isVideoTooLarge = false
-            var uploadedMoreThan4Images = false
-            var errorCode = 0
 
             // onPreExecuteと同等の処理
             withContext(Dispatchers.Main) {
                 Log.d(javaClass.name, "始めます")
             }
 
-            checkImagePathListState()
-
             try {
                 val twitter = TwitterFactory(configurationBuilder.build()).instance
                 val status = StatusUpdate(textTweet)
 
-                //set video
-                if (selectedVideoPath.isNotEmpty()) {
-                    try {
-                        // https://ja.stackoverflow.com/questions/28169/android%E3%81%8B%E3%82%89-twitter4j-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%A6%E5%8B%95%E7%94%BB%E3%82%92%E6%8A%95%E7%A8%BF%E3%82%92%E3%81%97%E3%81%9F%E3%81%84
-                        val uriVideoFile = selectedVideoPath.toUri()
-                        println("uriVideoFile = $uriVideoFile")
-                        //TODO Decide what to do if the file is empty
-
-                        val inputStream = contentResolver.openInputStream(uriVideoFile)
-                            ?: throw Exception("inputStream is empty")
-
-                        val video = twitter.uploadMediaChunked("video.mp4", inputStream)
-                        status.setMediaIds(video.mediaId)
-                        println("Uploading a video...")
-                        withContext(Dispatchers.IO) {
-                            inputStream.close()
-                        }
-                    } catch (e: OutOfMemoryError) {
-                        e.printStackTrace()
-                        isVideoTooLarge = true
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
-                } else if (imagesPathList.size > 4) {
-                    uploadedMoreThan4Images = true
-                } else if (imagesPathList.size >= 1) {
-                    println("Uploading image(s)...")
-                    //upload multiple image files (4 files at most)
-                    val mediaIds = LongArray(imagesPathList.size)
-                    for (i in mediaIds.indices) {
-                        println("imagesPathList.get(i): " + imagesPathList[i])
-                        val uriPhotoFile = imagesPathList[i].toUri()
-                        println("uriPhotoFile = $uriPhotoFile")
-                        //TODO Decide what to do if the file is empty
-
-                        val inputStream = contentResolver.openInputStream(uriPhotoFile)
-                            ?: continue//Should use break?
-                        //todo: Need to check the size of input stream
-
-                        val fileName = "image_$i"
-                        val media = twitter.uploadMedia(fileName, inputStream)
-                        println("media.getImageType(): " + media.imageType + " media.getSize(): " + media.size)
-                        mediaIds[i] = media.mediaId
-
-                        withContext(Dispatchers.IO) {
-                            inputStream.close()
-                            println("Closing inputStream...")
-                        }
-                    }
-                    status.setMediaIds(*mediaIds)
-                } else {
-                    println("Uploading nothing...")
-                    status.setMedia(null)
+                val isSuccess: Boolean = try {
+                    uploadMediaFiles(twitter, status, contentResolver)
+                } catch (e: Exception) {
+                    println(e.message)
+                    Log.d(TAG, e.message.toString())
+                    false
                 }
 
-                //send tweet
-                if (uploadedMoreThan4Images) {
-                    println("You cannot upload more than 4 images.")
-                } else if (isVideoTooLarge) {
-                    println("The video you uploaded is too large! Less than 27 seconds video should be uploaded without problem...")
-                } else {
-                    println("status=$status")
+                if (isSuccess) {
                     twitter.updateStatus(status)
                     statusCode = 200
-                    Log.d("TWEET", "The tweet was sent as expected...")
+                    Log.d(TAG, "The tweet was sent as expected...")
                 }
             } catch (te: TwitterException) {
                 te.printStackTrace()
@@ -191,11 +149,13 @@ class TweetRepository {
                 println("te.getErrorCode(): " + te.errorCode)
                 println("te.getErrorMessage(): " + te.errorMessage)
                 statusCode = te.statusCode
-                errorCode = te.errorCode
+            } catch (e: Exception) {
+                Log.d(TAG, e.message.toString())
+                e.printStackTrace()
+                statusCode = 400
             }
 
             flushOutUploadedImageVideo()
-            //Thread.sleep(800)
 
             // onPostExecuteメソッドと同等の処理
             withContext(Dispatchers.Main) {
@@ -206,13 +166,92 @@ class TweetRepository {
         {
             // onCancelledメソッドと同等の処理
             Log.e(javaClass.name, "ここにキャンセル時の処理を記述", e)
-            //binding.progressBar.visibility = View.GONE
         }
 
         return statusCode
     }
 
-    private fun flushOutUploadedImageVideo() {
+    private fun uploadMediaFiles(
+        twitter: Twitter,
+        statusUpdate: StatusUpdate,
+        contentResolver: ContentResolver
+    ): Boolean {
+        if (selectedVideoPath.isNotEmpty()) {
+            return uploadOneVideo(twitter, statusUpdate, contentResolver)
+        } else if (imagesPathList.size > 4) {
+            return false
+        } else if (imagesPathList.size >= 1) {
+            return uploadPhotos(twitter, statusUpdate, contentResolver)
+        }
+
+        println("Uploading nothing...")
+        statusUpdate.setMedia(null)
+        return true
+    }
+
+    private fun uploadPhotos(
+        twitter: Twitter,
+        statusUpdate: StatusUpdate,
+        contentResolver: ContentResolver
+    ): Boolean {
+        println("Uploading image(s)...")
+        val mediaIds = LongArray(imagesPathList.size)
+        for (i in mediaIds.indices) {
+            println("imagesPathList.get(i): " + imagesPathList[i])
+            val uriPhotoFile = imagesPathList[i].toUri()
+            println("uriPhotoFile = $uriPhotoFile")
+            //TODO Decide what to do if the file is empty
+
+            val inputStream = contentResolver.openInputStream(uriPhotoFile)
+                ?: continue//Should use break?
+            //todo: Need to check the size of input stream
+
+            val fileName = "image_$i"
+            val media = twitter.uploadMedia(fileName, inputStream)
+            println("media.getImageType(): " + media.imageType + " media.getSize(): " + media.size)
+            mediaIds[i] = media.mediaId
+
+            inputStream.close()
+            println("Closing inputStream...")
+        }
+
+        statusUpdate.setMediaIds(*mediaIds)
+        return true
+    }
+
+    private fun uploadOneVideo(
+        twitter: Twitter,
+        statusUpdate: StatusUpdate,
+        contentResolver: ContentResolver
+    ): Boolean {
+        var inputStream: InputStream? = null
+
+        try {
+            // https://ja.stackoverflow.com/questions/28169/android%E3%81%8B%E3%82%89-twitter4j-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%97%E3%81%A6%E5%8B%95%E7%94%BB%E3%82%92%E6%8A%95%E7%A8%BF%E3%82%92%E3%81%97%E3%81%9F%E3%81%84
+            val uriVideoFile = selectedVideoPath.toUri()
+            println("uriVideoFile = $uriVideoFile")
+
+            inputStream = contentResolver.openInputStream(uriVideoFile)
+                ?: throw Exception("inputStream is empty")
+
+            val video = twitter.uploadMediaChunked("video.mp4", inputStream)
+            statusUpdate.setMediaIds(video.mediaId)
+            println("Uploading a video...")
+            //inputStream.close()
+            return true
+        } catch (e: OutOfMemoryError) {
+            e.printStackTrace()
+            //isVideoTooLarge = true
+        } catch (e: IOException) {
+            e.printStackTrace()
+        } finally {
+            inputStream?.close()
+        }
+
+        return false
+    }
+
+    fun flushOutUploadedImageVideo() {
         imagesPathList.clear()
         selectedVideoPath = ""
     }

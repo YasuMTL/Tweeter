@@ -95,8 +95,8 @@ class TweetViewModel(
         return@withContext twitterRepository.sendTweet(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver)
     }
 
-    suspend fun sendTweetWithChosenUri(textTweet: String, contentResolver: ContentResolver, uri: Uri): Int = withContext(Dispatchers.IO){
-        return@withContext twitterRepository.sendTweetWithChosenUri(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver, uri)
+    suspend fun sendTweetWithChosenUri(textTweet: String, contentResolver: ContentResolver, chosenURIs: MutableList<Uri>): Int = withContext(Dispatchers.IO){
+        return@withContext twitterRepository.sendTweetWithChosenUri(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver, chosenURIs)
     }
 
     fun saveLoginStateToPreferenceStore(loginState: Boolean, context: Context) {
@@ -133,6 +133,7 @@ class TweetViewModel(
 
     fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){ twitterRepository.takeOnePhoto(context, launcher) }
     fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ twitterRepository.takeOneVideo(context, launcher) }
+    fun clearUploadedMediaFiles() { twitterRepository.clearUploadedMediaFiles() }
 }
 
 class TweetViewModelFactory(

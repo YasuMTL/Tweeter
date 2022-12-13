@@ -22,12 +22,12 @@ class ReceiveTokenFragment : Fragment() {
 
     private val tweetRepository = TweetRepository()
     private val receiveTokenRepository = ReceiveTokenRepository()
-    private val SettingDataStore: SettingDataStore by lazy {
+    private val settingDataStore: SettingDataStore by lazy {
         SettingDataStore(requireContext())
     }
 
     private val sharedViewModel: TweetViewModel by activityViewModels {
-        TweetViewModelFactory(tweetRepository, receiveTokenRepository, SettingDataStore)
+        TweetViewModelFactory(tweetRepository, receiveTokenRepository, settingDataStore)
     }
 
     override fun onCreateView(

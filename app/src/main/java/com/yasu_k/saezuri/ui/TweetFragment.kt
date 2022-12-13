@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.ext.SdkExtensions.getExtensionVersion
 import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
@@ -15,9 +17,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.CallSuper
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.MutableLiveData
@@ -62,11 +66,45 @@ class TweetFragment : Fragment(),
         MutableLiveData()
     }
 
-    private var chosenUri: Uri? = null
-    private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    //private var chosenUri: Uri? = null
+    private var chosenURIs = mutableListOf<Uri>()
+    private val getVideoContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         println("uri = $uri")
-        chosenUri = uri
-        //TODO: How to pass in this "uri" in order to send a tweet?
+        //chosenUri = uri
+        if (uri != null) {
+            chosenURIs.add(uri)
+        }
+    }
+
+    private val getPhotosContent = registerForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(4)) { uriList ->
+//    private val getPhotosContent = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uriList ->
+        println("uri = $uriList uriList.size() = ${uriList.size}")
+        //chosenUri = uriList.first()
+        uriList.forEach {
+            chosenURIs.add(it)
+        }
+
+        //TODO: What to do when there are more than one image?
+
+        val message = if (uriList.isEmpty()) {
+            "No media selected"
+        } else {
+            "Number of items selected: ${uriList.size}"
+        }
+
+        println(message)
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun isPhotoPickerAvailable(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            true
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getExtensionVersion(Build.VERSION_CODES.R) >= 2
+        } else {
+            false
+        }
     }
 
     //val takeImageResult = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -82,7 +120,7 @@ class TweetFragment : Fragment(),
     }
 
     private val takeVideoResult = registerForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
-        Log.i(javaClass.name, "success = $success" /*url = $uri"*/)
+        Log.i(javaClass.name, "success = $success")
         if (!success) {
             Toast.makeText(requireContext(), "Video was not captured for some reason", Toast.LENGTH_SHORT).show()
         }
@@ -124,6 +162,7 @@ class TweetFragment : Fragment(),
         return view
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -202,7 +241,10 @@ class TweetFragment : Fragment(),
                         Toast.LENGTH_LONG
                     ).show()
                 }
-                else -> Toast.makeText(requireContext(), "Something wrong happens...", Toast.LENGTH_SHORT).show()
+                else -> {
+                    Toast.makeText(requireContext(), "Something wrong happens...", Toast.LENGTH_SHORT).show()
+                    hideProgressBar()
+                }
             }
         }
 
@@ -236,6 +278,9 @@ class TweetFragment : Fragment(),
             }
         }
         * */
+        val isPhotoPickerAvailable = isPhotoPickerAvailable()
+        //Toast.makeText(requireContext(), "isPhotoPickerAvailable() = $isPhotoPickerAvailable", Toast.LENGTH_SHORT).show()
+        println("isPhotoPickerAvailable() = $isPhotoPickerAvailable")
     }
 
     private fun setupButtons() {
@@ -284,7 +329,8 @@ class TweetFragment : Fragment(),
                 binding.indeterminateBar.visibility = View.VISIBLE
 
                 lifecycleScope.launch {
-                    if (chosenUri == null) {
+                    //if (chosenUri == null) {
+                    if (chosenURIs.isEmpty()) {
                         statusCode.value =
                             sharedViewModel.sendTweet(
                                 binding.etTweet.text.toString(),
@@ -296,9 +342,9 @@ class TweetFragment : Fragment(),
                             sharedViewModel.sendTweetWithChosenUri(
                                 binding.etTweet.text.toString(),
                                 requireContext().contentResolver,
-                                chosenUri!!
+                                chosenURIs
                             )
-                        chosenUri = null
+                        chosenURIs.clear()
                     }
                 }
             }
@@ -312,7 +358,11 @@ class TweetFragment : Fragment(),
                 binding.root.findNavController().navigate(action)
             }
 
-            R.id.btnClear -> clearOutEtTweet()
+            R.id.btnClear -> {
+                clearOutEtTweet()
+                sharedViewModel.clearUploadedMediaFiles()
+                println("Uploaded files (URIs) were removed from memory")
+            }
 
             //R.id.btnUploadPhotoVideo -> { sharedViewModel.uploadPhotoVideo(requireContext()) }
             R.id.btnUploadPhotoVideo -> {
@@ -331,6 +381,10 @@ class TweetFragment : Fragment(),
 
     private fun clearOutEtTweet() {
         binding.etTweet.setText("")
+        hideProgressBar()
+    }
+
+    private fun hideProgressBar() {
         binding.indeterminateBar.visibility = View.GONE
     }
 
@@ -343,11 +397,12 @@ class TweetFragment : Fragment(),
         when (whichOption) {
             Option.SELECT_IMAGES -> {
                 Toast.makeText(requireContext(), "Choose photos!", Toast.LENGTH_SHORT).show()
-                getContent.launch("image/*")
+                //getContent.launch("image/*")
+                getPhotosContent.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }
             Option.SELECT_ONE_VIDEO -> {
                 Toast.makeText(requireContext(), "Pick up a video!", Toast.LENGTH_SHORT).show()
-                getContent.launch("video/*")
+                getVideoContent.launch("video/*")
             }
             Option.TAKE_ONE_PHOTO -> {
                 Toast.makeText(requireContext(), "Take one photo!", Toast.LENGTH_SHORT).show()

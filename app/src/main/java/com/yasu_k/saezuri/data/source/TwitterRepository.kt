@@ -35,8 +35,8 @@ class TwitterRepository(
         return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
     }
 
-    suspend fun sendTweetWithChosenUri(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver, uri: Uri): Int {
-        tweetRepository.setUri(uri)
+    suspend fun sendTweetWithChosenUri(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver, chosenURIs: MutableList<Uri>): Int {
+        tweetRepository.setUri(chosenURIs)
         return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
     }
 
@@ -66,4 +66,7 @@ class TwitterRepository(
 
     fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOnePhoto(context, launcher) }
     fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOneVideo(context, launcher) }
+    fun clearUploadedMediaFiles() {
+        tweetRepository.flushOutUploadedImageVideo()
+    }
 }
