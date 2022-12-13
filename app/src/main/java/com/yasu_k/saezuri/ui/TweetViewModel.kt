@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import twitter4j.TwitterException
 
 data class LoginUiState(
     val isLoggedIn: Boolean = false,
@@ -134,6 +135,9 @@ class TweetViewModel(
     fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){ twitterRepository.takeOnePhoto(context, launcher) }
     fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ twitterRepository.takeOneVideo(context, launcher) }
     fun clearUploadedMediaFiles() { twitterRepository.clearUploadedMediaFiles() }
+    fun getStoredTwitterException(): TwitterException? {
+        return twitterRepository.getStoredTwitterException()
+    }
 }
 
 class TweetViewModelFactory(

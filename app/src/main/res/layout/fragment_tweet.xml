@@ -111,11 +111,21 @@
                 android:layout_height="wrap_content"
                 android:layout_above="@+id/tvPrivacyPolicy"
                 android:indeterminate="true"
-                android:visibility="gone"
+                android:visibility="invisible"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@id/underPanel" />
+                app:layout_constraintTop_toBottomOf="@id/warningMessage" />
+
+            <TextView
+                android:id="@+id/warningMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Uploading video. It could take a moment..."
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/indeterminateBar"
+                app:layout_constraintStart_toStartOf="parent" />
 
             <TextView
                 android:id="@+id/tvPrivacyPolicy"

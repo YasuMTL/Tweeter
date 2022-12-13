@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.yasu_k.saezuri.LoginInfo
 import com.yasu_k.saezuri.data.SettingDataStore
+import twitter4j.TwitterException
 import twitter4j.conf.ConfigurationBuilder
 
 class TwitterRepository(
@@ -68,5 +69,9 @@ class TwitterRepository(
     fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOneVideo(context, launcher) }
     fun clearUploadedMediaFiles() {
         tweetRepository.flushOutUploadedImageVideo()
+    }
+
+    fun getStoredTwitterException(): TwitterException? {
+        return tweetRepository.getStoredTwitterException()
     }
 }

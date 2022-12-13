@@ -24,6 +24,7 @@ class TweetRepository {
         val imagesPathList = arrayListOf<String>()
         //@JvmField
         var selectedVideoPath = ""
+        var storedTwitterException: TwitterException? = null
     }
 
     init {
@@ -115,6 +116,7 @@ class TweetRepository {
                       contentResolver: ContentResolver
     ): Int {
         var statusCode = 0
+        storedTwitterException = null
 
         try {
             val TAG = "SendTweet"
@@ -142,6 +144,7 @@ class TweetRepository {
                     Log.d(TAG, "The tweet was sent as expected...")
                 }
             } catch (te: TwitterException) {
+                storedTwitterException = te
                 te.printStackTrace()
                 Log.d(TAG, te.toString())
                 println("te.getStatusCode(): " + te.statusCode)
@@ -170,6 +173,8 @@ class TweetRepository {
 
         return statusCode
     }
+
+    fun getStoredTwitterException(): TwitterException? = storedTwitterException
 
     private fun uploadMediaFiles(
         twitter: Twitter,

@@ -219,6 +219,7 @@ class TweetFragment : Fragment(),
                         getString(R.string.tweet_sent_success),
                         Toast.LENGTH_SHORT
                     ).show()
+                    removeUploadedFiles()
                     clearOutEtTweet()
                 }
 
@@ -231,7 +232,10 @@ class TweetFragment : Fragment(),
                 }
 
                 403 -> {
-
+                    val twitterException = sharedViewModel.getStoredTwitterException()
+                    val errorMessage = getMessageThroughErrorCode(twitterException?.errorCode ?: -1)
+                    println("errorMessage = $errorMessage")
+                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
                 }
 
                 503 -> {
@@ -243,44 +247,60 @@ class TweetFragment : Fragment(),
                 }
                 else -> {
                     Toast.makeText(requireContext(), "Something wrong happens...", Toast.LENGTH_SHORT).show()
+                    removeUploadedFiles()
                     hideProgressBar()
                 }
             }
+            enableButtons()
+            hideWarningWhileUploading()
+            hideProgressBar()
         }
 
-        /*
-        else if (statusCode == 403)
+        val isPhotoPickerAvailable = isPhotoPickerAvailable()
+        println("isPhotoPickerAvailable() = $isPhotoPickerAvailable")
+    }
+
+    private fun getMessageThroughErrorCode(errorCode: Int): String {
+        val errorMessage: String = when (errorCode)
         {
-            when (errorCode)
-            {
-                //170 ->
-                    /*Toast.makeText(
-                    applicationContext,
+            170 -> {
+                Toast.makeText(
+                    requireContext(),
                     getString(R.string.no_text_to_tweet),
                     Toast.LENGTH_SHORT
-                ).show()*/
+                ).show()
+                getString(R.string.no_text_to_tweet)
+            }
 
-                //193 ->
-                 /*Toast.makeText(
-                    applicationContext,
+            193 -> {
+                Toast.makeText(
+                    requireContext(),
                     getString(R.string.media_is_too_large),
                     Toast.LENGTH_LONG
-                ).show()*/
+                ).show()
+                getString(R.string.media_is_too_large)
+            }
 
-                //-1 ->
-                /*Toast.makeText(
-                    applicationContext,
+            -1 -> {
+                Toast.makeText(
+                    requireContext(),
                     getString(R.string.unknown_error),
                     Toast.LENGTH_LONG
-                ).show()*/
+                ).show()
+                getString(R.string.unknown_error)
+            }
 
-                else -> {}
+            else -> {
+                getString(R.string.unknown_error)
             }
         }
-        * */
-        val isPhotoPickerAvailable = isPhotoPickerAvailable()
-        //Toast.makeText(requireContext(), "isPhotoPickerAvailable() = $isPhotoPickerAvailable", Toast.LENGTH_SHORT).show()
-        println("isPhotoPickerAvailable() = $isPhotoPickerAvailable")
+
+        return errorMessage
+    }
+
+    private fun removeUploadedFiles() {
+        chosenURIs.clear()
+        Toast.makeText(requireContext(), "Uploaded files were removed", Toast.LENGTH_LONG).show()
     }
 
     private fun setupButtons() {
@@ -338,13 +358,15 @@ class TweetFragment : Fragment(),
                             )
                     } else {
                         Toast.makeText(requireContext(), "Uploading...", Toast.LENGTH_LONG).show()
+                        disableButtons()
+                        showWarningWhileUploading()
                         statusCode.value =
                             sharedViewModel.sendTweetWithChosenUri(
                                 binding.etTweet.text.toString(),
                                 requireContext().contentResolver,
                                 chosenURIs
                             )
-                        chosenURIs.clear()
+                        //chosenURIs.clear()
                     }
                 }
             }
@@ -376,6 +398,34 @@ class TweetFragment : Fragment(),
                 //TODO test
                 //takeImageResult.launch(tempUri)
             }
+        }
+    }
+
+    private fun showWarningWhileUploading() {
+        binding.warningMessage.visibility = View.VISIBLE
+        println("warningMessage is visible")
+    }
+
+    private fun hideWarningWhileUploading() {
+        binding.warningMessage.visibility = View.GONE
+        println("warningMessage is gone")
+    }
+
+    private fun disableButtons() {
+        binding.apply {
+            btnSendTweet.isEnabled = false
+            btnClear.isEnabled = false
+            btnLogOut.isEnabled = false
+            btnUploadPhotoVideo.isEnabled = false
+        }
+    }
+
+    private fun enableButtons() {
+        binding.apply {
+            btnSendTweet.isEnabled = true
+            btnClear.isEnabled = true
+            btnLogOut.isEnabled = true
+            btnUploadPhotoVideo.isEnabled = true
         }
     }
 
