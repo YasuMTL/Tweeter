@@ -28,9 +28,7 @@ class TwitterRepository(
             .setOAuthAccessTokenSecret(tokenSecret)
     }
 
-    fun logout(){
-        receiveTokenRepository.logout()
-    }
+    fun logout(){ receiveTokenRepository.logout() }
 
     suspend fun sendTweet(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver): Int {
         return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
@@ -67,11 +65,6 @@ class TwitterRepository(
 
     fun takeOnePhoto(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOnePhoto(context, launcher) }
     fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOneVideo(context, launcher) }
-    fun clearUploadedMediaFiles() {
-        tweetRepository.flushOutUploadedImageVideo()
-    }
-
-    fun getStoredTwitterException(): TwitterException? {
-        return tweetRepository.getStoredTwitterException()
-    }
+    fun clearUploadedMediaFiles() { tweetRepository.flushOutUploadedImageVideo() }
+    fun getStoredTwitterException(): TwitterException? = tweetRepository.getStoredTwitterException()
 }

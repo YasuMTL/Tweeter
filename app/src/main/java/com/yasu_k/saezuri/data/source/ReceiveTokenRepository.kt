@@ -1,12 +1,10 @@
 package com.yasu_k.saezuri.data.source
 
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.app.Dialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -43,6 +41,9 @@ class ReceiveTokenRepository {
     fun logout() {
         val TAG = "logout()"
         Log.d(TAG, "--------------- START ---------------")
+        _accTokenState.update {
+            it.copy(accessToken = null)
+        }
         Log.d(TAG, "--------------- END ---------------")
     }
 
@@ -143,7 +144,7 @@ class ReceiveTokenRepository {
     }
 
     inner class TwitterWebViewClient(private val scope: LifecycleCoroutineScope) : WebViewClient() {
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+        //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
         override fun shouldOverrideUrlLoading(
             view: WebView?,
             request: WebResourceRequest?

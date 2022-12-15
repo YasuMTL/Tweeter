@@ -78,14 +78,19 @@ class TweetViewModel(
     }
 
     fun logout() {
+        resetUiState()
+        Log.i(TAG, "logout...")
         twitterRepository.logout()
+    }
+
+    fun resetUiState(){
+        println("resetUiState is called")
         _uiState.update {
             it.copy(
                 isLoggedIn = false,
                 token = "",
                 tokenSecret = "")
         }
-        Log.i(TAG, "logout...")
     }
 
     fun isLoggedIn(): Boolean {

@@ -17,6 +17,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -147,8 +148,18 @@ class TweetFragment : Fragment(),
         }
     }
 
-    lateinit var tempUri: Uri
+    private lateinit var tempUri: Uri
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        println("Tweet: onCreate called")
+
+        val callback = requireActivity().onBackPressedDispatcher.addCallback(this) {
+            // Handle the back button event
+            //Toast.makeText(requireContext(), "Back button was pressed!", Toast.LENGTH_SHORT).show()
+            println("Back button was pressed!")
+        }
+    }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -174,13 +185,6 @@ class TweetFragment : Fragment(),
             viewModel = sharedViewModel
             //hyperlink
             tvPrivacyPolicy.movementMethod = LinkMovementMethod.getInstance()
-
-            btnLogOut.setOnClickListener {
-                sharedViewModel.clearTokenInfoFromPreferenceStore(requireContext())
-                val action =
-                    TweetFragmentDirections.actionTweetFragmentToReceiveTokenFragment()
-                root.findNavController().navigate(action)
-            }
 
             etTweet.addTextChangedListener(object : TextWatcher {
                 override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
@@ -314,6 +318,7 @@ class TweetFragment : Fragment(),
 
     /** Called when leaving the activity  */
     override fun onPause() {
+        println("Tweet: onPause is called")
         if (mAdView != null) {
             mAdView!!.pause()
         }
@@ -323,6 +328,7 @@ class TweetFragment : Fragment(),
     /** Called when returning to the activity  */
     override fun onResume() {
         super.onResume()
+        println("Tweet: onResume is called")
         if (mAdView != null) {
             mAdView!!.resume()
         }
@@ -330,6 +336,7 @@ class TweetFragment : Fragment(),
 
     /** Called before the activity is destroyed  */
     override fun onDestroy() {
+        println("Tweet: onDestroy is called")
         if (mAdView != null) {
             mAdView!!.destroy()
         }
@@ -337,19 +344,19 @@ class TweetFragment : Fragment(),
     }
 
     override fun onClick(view: View) {
+        println("TweetFragment: onClick() is fired!")
         when (view.id) {
-            R.id.btnLogin -> {
-                //checkIfILoggedIn()
-                lifecycleScope.launch {
-                    sharedViewModel.login(requireContext(), lifecycleScope)
-                }
-            }
+//            R.id.btnLogin -> {
+//                //checkIfILoggedIn()
+//                lifecycleScope.launch {
+//                    sharedViewModel.login(requireContext(), lifecycleScope)
+//                }
+//            }
 
             R.id.btnSendTweet -> {
                 binding.indeterminateBar.visibility = View.VISIBLE
 
                 lifecycleScope.launch {
-                    //if (chosenUri == null) {
                     if (chosenURIs.isEmpty()) {
                         statusCode.value =
                             sharedViewModel.sendTweet(
@@ -372,11 +379,15 @@ class TweetFragment : Fragment(),
             }
 
             R.id.btnLogOut -> {
+                println("LogOut button was pressed!")
                 sharedViewModel.logout()
+
                 lifecycleScope.launch {
                     settingDataStore.saveLoginInfoToPreferencesStore(isLoggedInManager = false, requireContext())
+                    //sharedViewModel.resetUiState()
                 }
                 val action = TweetFragmentDirections.actionTweetFragmentToReceiveTokenFragment()
+                println("Fragment: Tweet -> ReceiveToken")
                 binding.root.findNavController().navigate(action)
             }
 
@@ -441,6 +452,7 @@ class TweetFragment : Fragment(),
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        println("Tweet: onDestroyView is called")
     }
 
     override fun onOptionClick(whichOption: Option) {

@@ -30,11 +30,24 @@ class ReceiveTokenFragment : Fragment() {
         TweetViewModelFactory(tweetRepository, receiveTokenRepository, settingDataStore)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        println("ReceiveToken: onCreate called")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        println("ReceiveToken: onStop called")
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        println("ReceiveToken: onCreateView called")
+        val isLoggedIn = sharedViewModel.uiState.value.isLoggedIn
+        println("isLoggedIn = $isLoggedIn")
         _binding = FragmentReceiveTokenBinding.inflate(inflater, container, false)
         val view = binding.root
 
@@ -43,7 +56,7 @@ class ReceiveTokenFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        println("ReceiveToken: onViewCreated called")
         binding.apply {
             viewModel = sharedViewModel
 
@@ -54,9 +67,13 @@ class ReceiveTokenFragment : Fragment() {
                     sharedViewModel.saveTokenSecretInfoToPreferenceStore(loginUiState.tokenSecret, requireContext())
 
                     Log.i(javaClass.name, "Store the info to preferences loginUiState.isLoggedIn=${loginUiState.isLoggedIn} loginUiState.token=${loginUiState.token}")
+
                     val action =
                         ReceiveTokenFragmentDirections.actionReceiveTokenFragmentToTweetFragment()
-                    root.findNavController().navigate(action)
+                    if (root.findNavController().currentDestination?.id == root.findNavController().graph.startDestinationId) {
+                        println("Fragment: 1 ReceiveToken -> Tweet")
+                        root.findNavController().navigate(action)
+                    }
                 }
             }
 
@@ -71,6 +88,7 @@ class ReceiveTokenFragment : Fragment() {
             if (isLoggedIn) {
                 val action =
                     ReceiveTokenFragmentDirections.actionReceiveTokenFragmentToTweetFragment()
+                println("Fragment: 2 ReceiveToken -> Tweet")
                 root.findNavController().navigate(action)
             }
         }
@@ -79,5 +97,11 @@ class ReceiveTokenFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        println("ReceiveToken: onDestroyView is called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        println("ReceiveToken: onDestroy is called")
     }
 }
