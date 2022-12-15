@@ -49,6 +49,8 @@ class TweetFragment : Fragment(),
     View.OnClickListener,
     MediaDialogFragment.NoticeDialogListener {
 
+    private var wasVideoChosen = false
+    private var werePhotosChosen = false
     private var _binding: FragmentTweetBinding? = null
     private val binding get() = _binding!!
 
@@ -94,7 +96,7 @@ class TweetFragment : Fragment(),
         }
 
         println(message)
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        showLongToast(message)
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -116,14 +118,14 @@ class TweetFragment : Fragment(),
             imagesPathList.removeAt(indexOfLastElement)
             val message = "Last element (URI) of the imagesPathList was eliminated"
             println(message)
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            showLongToast(message)
         }
     }
 
     private val takeVideoResult = registerForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
         Log.i(javaClass.name, "success = $success")
         if (!success) {
-            Toast.makeText(requireContext(), "Video was not captured for some reason", Toast.LENGTH_SHORT).show()
+            showLongToast("Video was not captured for some reason")
         }
     }
 
@@ -159,6 +161,8 @@ class TweetFragment : Fragment(),
             //Toast.makeText(requireContext(), "Back button was pressed!", Toast.LENGTH_SHORT).show()
             println("Back button was pressed!")
         }
+
+        //callback.remove()
     }
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -218,39 +222,27 @@ class TweetFragment : Fragment(),
         statusCode.observe(viewLifecycleOwner) { code ->
             when (code) {
                 200 -> {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.tweet_sent_success),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showLongToast(getString(R.string.tweet_sent_success))
                     removeUploadedFiles()
                     clearOutEtTweet()
                 }
 
                 400 -> {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.request_invalid),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showLongToast(getString(R.string.request_invalid))
                 }
 
                 403 -> {
                     val twitterException = sharedViewModel.getStoredTwitterException()
                     val errorMessage = getMessageThroughErrorCode(twitterException?.errorCode ?: -1)
                     println("errorMessage = $errorMessage")
-                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_LONG).show()
+                    showLongToast(errorMessage)
                 }
 
                 503 -> {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.twitter_unavailable),
-                        Toast.LENGTH_LONG
-                    ).show()
+                    showLongToast(getString(R.string.twitter_unavailable))
                 }
                 else -> {
-                    Toast.makeText(requireContext(), "Something wrong happens...", Toast.LENGTH_SHORT).show()
+                    showLongToast("Something wrong happens...")
                     removeUploadedFiles()
                     hideProgressBar()
                 }
@@ -268,29 +260,17 @@ class TweetFragment : Fragment(),
         val errorMessage: String = when (errorCode)
         {
             170 -> {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.no_text_to_tweet),
-                    Toast.LENGTH_SHORT
-                ).show()
+                showLongToast(getString(R.string.no_text_to_tweet))
                 getString(R.string.no_text_to_tweet)
             }
 
             193 -> {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.media_is_too_large),
-                    Toast.LENGTH_LONG
-                ).show()
+                showLongToast(getString(R.string.media_is_too_large))
                 getString(R.string.media_is_too_large)
             }
 
             -1 -> {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.unknown_error),
-                    Toast.LENGTH_LONG
-                ).show()
+                showLongToast(getString(R.string.unknown_error))
                 getString(R.string.unknown_error)
             }
 
@@ -304,7 +284,7 @@ class TweetFragment : Fragment(),
 
     private fun removeUploadedFiles() {
         chosenURIs.clear()
-        Toast.makeText(requireContext(), "Uploaded files were removed", Toast.LENGTH_LONG).show()
+        showLongToast("Uploaded files were removed")
     }
 
     private fun setupButtons() {
@@ -364,7 +344,7 @@ class TweetFragment : Fragment(),
                                 requireContext().contentResolver
                             )
                     } else {
-                        Toast.makeText(requireContext(), "Uploading...", Toast.LENGTH_LONG).show()
+                        showLongToast("Uploading...")
                         disableButtons()
                         showWarningWhileUploading()
                         statusCode.value =
@@ -375,6 +355,7 @@ class TweetFragment : Fragment(),
                             )
                         //chosenURIs.clear()
                     }
+                    clearOutMediaFiles()
                 }
             }
 
@@ -443,6 +424,12 @@ class TweetFragment : Fragment(),
     private fun clearOutEtTweet() {
         binding.etTweet.setText("")
         hideProgressBar()
+        clearOutMediaFiles()
+    }
+
+    private fun clearOutMediaFiles() {
+        werePhotosChosen = false
+        wasVideoChosen = false
     }
 
     private fun hideProgressBar() {
@@ -458,25 +445,58 @@ class TweetFragment : Fragment(),
     override fun onOptionClick(whichOption: Option) {
         when (whichOption) {
             Option.SELECT_IMAGES -> {
-                Toast.makeText(requireContext(), "Choose photos!", Toast.LENGTH_SHORT).show()
-                //getContent.launch("image/*")
-                getPhotosContent.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                if (wasVideoChosen) {
+                    showLongToast("One video is already picked up! You cannot upload video and photo together!")
+                } else {
+                    showLongToast("Choose photos!")
+                    werePhotosChosen = true
+                    getPhotosContent.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
             }
+
             Option.SELECT_ONE_VIDEO -> {
-                Toast.makeText(requireContext(), "Pick up a video!", Toast.LENGTH_SHORT).show()
-                getVideoContent.launch("video/*")
+                if (werePhotosChosen) {
+                    showLongToast("Images were already chosen! You cannot upload images and video together!")
+                } else {
+                    showLongToast("Pick up a video!")
+                    if (wasVideoChosen) {
+                        showLongToast("One video has already been chosen. This action will replace the video with new one.")
+                    }
+                    wasVideoChosen = true
+                    getVideoContent.launch("video/*")
+                }
             }
+
             Option.TAKE_ONE_PHOTO -> {
-                Toast.makeText(requireContext(), "Take one photo!", Toast.LENGTH_SHORT).show()
-                sharedViewModel.takeOnePhoto(requireContext(), takeImageResult)
+                if (wasVideoChosen) {
+                    showLongToast("One video is already picked up! You cannot upload video and photo together!")
+                } else {
+                    showLongToast("Take one photo!")
+                    werePhotosChosen = true
+                    sharedViewModel.takeOnePhoto(requireContext(), takeImageResult)
+                }
             }
+
             Option.CAPTURE_ONE_VIDEO -> {
-                Toast.makeText(requireContext(), "Capture a video!", Toast.LENGTH_SHORT).show()
-                sharedViewModel.takeOneVideo(requireContext(), takeVideoResult)
+                if (werePhotosChosen) {
+                    showLongToast("Images were already chosen! You cannot upload images and video together!")
+                } else {
+                    showLongToast("Capture a video!")
+                    if (wasVideoChosen) {
+                        showLongToast("One video has already been chosen. This action will replace the video with new one.")
+                    }
+                    wasVideoChosen = true
+                    sharedViewModel.takeOneVideo(requireContext(), takeVideoResult)
+                }
             }
+
             Option.NOT_CHOSEN -> {
-                Toast.makeText(requireContext(), "Unknown!", Toast.LENGTH_SHORT).show()
+                showLongToast("Nothing is chosen")
             }
         }
+    }
+
+    private fun showLongToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 }

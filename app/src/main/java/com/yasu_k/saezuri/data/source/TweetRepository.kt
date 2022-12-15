@@ -95,6 +95,9 @@ class TweetRepository {
             } else if (uri.toString().contains("jpg", true)) {
                 imagesPathList.add(uri.toString())
                 println("Image URI is set!")
+            } else if (uri.toString().contains("photo", true)) {
+                imagesPathList.add(uri.toString())
+                println("Image URI is set!")
             } else {
                 selectedVideoPath = uri.toString()
                 println("Video URI is set!")
