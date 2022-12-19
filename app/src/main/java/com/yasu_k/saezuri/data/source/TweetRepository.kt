@@ -105,6 +105,9 @@ class TweetRepository {
         }
     }
 
+    fun getImagesPathListSize() = imagesPathList.size
+    fun getSelectedVideoPathSize() = selectedVideoPath.length
+
     /**
      * Upload media file(s), send the tweet and return a status code
      *

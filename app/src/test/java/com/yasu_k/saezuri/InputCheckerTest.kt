@@ -1,15 +1,11 @@
 package com.yasu_k.saezuri
 
-import androidx.test.runner.AndroidJUnit4
-import org.assertj.core.api.Assertions.assertThat
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 //@Config(maxSdk = 32)
 //@RunWith(RobolectricTestRunner::class)
