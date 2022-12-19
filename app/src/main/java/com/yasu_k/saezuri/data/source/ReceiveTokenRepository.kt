@@ -47,34 +47,40 @@ class ReceiveTokenRepository {
         Log.d(TAG, "--------------- END ---------------")
     }
 
+    fun updateAccTokenStateForUnitTest(accessToken: AccessToken) {
+        _accTokenState.update {
+            it.copy(accessToken = accessToken)
+        }
+    }
+
     fun getRequestToken(
         context: Context,
         scope: LifecycleCoroutineScope
     )
     = scope.launch(Dispatchers.Default) {
-        val builder = ConfigurationBuilder()
-        //val twitter = Twitter.newBuilder()
-//            .prettyDebugEnabled(true)
-//            .oAuthConsumer(oAuthConsumerKey, oAuthConsumerSecret)
-//            .build()
-            .setDebugEnabled(true)
-            .setOAuthConsumerKey(oAuthConsumerKey)
-            .setOAuthConsumerSecret(oAuthConsumerSecret)
-            .setIncludeEmailEnabled(true)
-        val config = builder.build()
-        val factory = TwitterFactory(config)
-//        val factory = Twitter.newBuilder()
-        twitter = factory.instance
+        twitter = getTwitterInstance()
 
         try {
             val requestToken = twitter.oAuthRequestToken
-            //val requestToken = twitter.
+
             withContext(Dispatchers.Main) {
                 setupTwitterWebviewDialog(requestToken.authorizationURL, context, scope)
             }
         } catch (e: IllegalStateException) {
             Log.e("ERROR: ", e.toString())
         }
+    }
+
+    fun getTwitterInstance(): Twitter {
+        val builder = ConfigurationBuilder()
+            .setDebugEnabled(true)
+            .setOAuthConsumerKey(oAuthConsumerKey)
+            .setOAuthConsumerSecret(oAuthConsumerSecret)
+            .setIncludeEmailEnabled(true)
+        val config = builder.build()
+        val factory = TwitterFactory(config)
+
+        return factory.instance
     }
 
     // Show twitter login page in a dialog
