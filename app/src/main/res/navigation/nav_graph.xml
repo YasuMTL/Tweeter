@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/receiveTokenFragment">
+
+    <fragment
+        android:id="@+id/receiveTokenFragment"
+        android:name="com.yasu_k.saezuri.ui.ReceiveTokenFragment"
+        android:label="Saezuri"
+        app:defaultNavHost="true" >
+        <action
+            android:id="@+id/action_receiveTokenFragment_to_tweetFragment"
+            app:destination="@id/tweetFragment"
+            app:popUpTo="@id/tweetFragment"
+            app:popUpToInclusive="true"/>
+    </fragment>
+    <fragment
+        android:id="@+id/tweetFragment"
+        android:name="com.yasu_k.saezuri.ui.TweetFragment"
+        android:label="Saezuri" >
+        <action
+            android:id="@+id/action_tweetFragment_to_receiveTokenFragment"
+            app:destination="@id/receiveTokenFragment"
+            app:popUpTo="@id/receiveTokenFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+</navigation>

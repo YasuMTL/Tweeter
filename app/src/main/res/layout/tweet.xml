@@ -1,128 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
-    android:orientation="vertical"
     tools:context=".Tweet">
 
-    <LinearLayout
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="end"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_graph"
+        android:name="androidx.navigation.fragment.NavHostFragment" />
+</FrameLayout>
 
-        <Button
-            android:id="@+id/btnLogOut"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:text="@string/logout"
-            android:drawableLeft="@drawable/sharp_exit_to_app_white_18" />
-
-        <Button
-            android:id="@+id/btnLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:drawableLeft="@drawable/sharp_login_white_18"
-            android:text="@string/login" />
-
-    </LinearLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:hint="@string/what_s_happening">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etTweet"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:inputType="textMultiLine"
-            android:maxLines="3"
-            app:layout_constraintBottom_toTopOf="@+id/btnUploadPhotoVideo"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="1.0"
-            tools:layout_editor_absoluteX="7dp" />
-
-        <TextView
-            android:id="@+id/tvTweetTextCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btnSendTweet"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|center_horizontal"
-            android:layout_margin="4dp"
-            android:gravity="center|center_horizontal"
-            android:text="@string/tweet"
-            android:drawableLeft="@drawable/sharp_send_white_18"
-            />
-
-        <Button
-            android:id="@+id/btnUploadPhotoVideo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|center_horizontal"
-            android:layout_margin="4dp"
-            android:gravity="center|center_horizontal"
-            android:text="@string/photo"
-            android:drawableLeft="@drawable/sharp_add_photo_alternate_white_18"
-            />
-
-        <Button
-            android:id="@+id/btnClear"
-            android:layout_width="117dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center|center_horizontal"
-            android:layout_margin="4dp"
-            android:drawableLeft="@drawable/sharp_delete_sweep_white_18"
-            android:gravity="center|center_horizontal"
-            android:text="@string/clear" />
-
-    </LinearLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <TextView
-            android:id="@+id/tvPrivacyPolicy"
-            android:layout_width="126dp"
-            android:layout_height="26dp"
-            android:layout_above="@+id/adView"
-            android:layout_alignEnd="@id/adView"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="false"
-            android:layout_marginBottom="19dp"
-            android:text="@string/privacy_policy" />
-
-        <com.google.android.gms.ads.AdView
-            xmlns:ads="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/adView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"
-            ads:adSize="LARGE_BANNER"
-            ads:adUnitId="@string/adUnit_id">
-        </com.google.android.gms.ads.AdView>
-    </RelativeLayout>
-
-</LinearLayout>

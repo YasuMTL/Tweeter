@@ -31,4 +31,6 @@
     <string name="privacy_policy" translatable="false"><a href="https://yasumtl.github.io/privacy_policy/saezuri.html">Privacy Policy</a></string>
     <string name="admob_id" translatable="false">ca-app-pub-6638004970288520~6863230244</string>
     <string name="adUnit_id" translatable="false">ca-app-pub-6638004970288520/8645239296</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
