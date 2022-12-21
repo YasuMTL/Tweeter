@@ -1,5 +1,5 @@
 # Tweeter
-A Twitter client app to send tweet.
+A Twitter client app to send tweet using the API [Twitter4j](https://twitter4j.org/).
 
 [![Twitter](https://img.shields.io/badge/Twitter-@yasunari_k_-9C27B0.svg)](https://twitter.com/yasunari_k_)
 
