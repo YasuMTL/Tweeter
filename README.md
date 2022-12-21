@@ -18,8 +18,10 @@ A Twitter client app to send tweet.
 ### After sending the tweet
 <img src="https://user-images.githubusercontent.com/45267210/208982951-bff666ec-91b2-4466-b781-f1f1a83ff0de.png" alt="Week mode" width="260">
 
-<!-- 
-## Features
-- [x] Jetpack Compose
-- [ ] [Dependency Injection](#dependency-injection) - Use Hilt or Dagger2 ?
--->
+## To Implement
+- [ ] Jetpack Compose
+- [ ] [Dependency Injection](#dependency-injection) - Use Hilt or Dagger2.
+- [ ] Unit Test
+
+## To Upgrade
+- [ ] API Twitter4j (4.0.7 -> 4.1.2)
