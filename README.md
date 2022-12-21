@@ -3,6 +3,25 @@ A Twitter client app to send tweet using the API [Twitter4j](https://twitter4j.o
 
 [![Twitter](https://img.shields.io/badge/Twitter-@yasunari_k_-9C27B0.svg)](https://twitter.com/yasunari_k_)
 
+## Used Technologies
+- MVVM
+- Kotlin Coroutine
+- Twitter4j
+- WebView
+- Data Store Preference
+- Fragment
+- ViewModel
+- LiveData
+- Kotlin Flow
+
+## To Implement
+- [ ] Jetpack Compose
+- [ ] Dependency Injection - Use Hilt or Dagger2
+- [ ] Unit Test
+
+## To Upgrade
+- [ ] API Twitter4j (4.0.7 -> 4.1.2)
+
 ### Before login
 <img src="https://user-images.githubusercontent.com/45267210/208982152-869720f0-efc4-4327-a750-702426873e0e.png" alt="Week mode" width="260">
 
@@ -17,11 +36,3 @@ A Twitter client app to send tweet using the API [Twitter4j](https://twitter4j.o
 
 ### After sending the tweet
 <img src="https://user-images.githubusercontent.com/45267210/208982951-bff666ec-91b2-4466-b781-f1f1a83ff0de.png" alt="Week mode" width="260">
-
-## To Implement
-- [ ] Jetpack Compose
-- [ ] Dependency Injection - Use Hilt or Dagger2
-- [ ] Unit Test
-
-## To Upgrade
-- [ ] API Twitter4j (4.0.7 -> 4.1.2)
