@@ -20,7 +20,7 @@ A Twitter client app to send tweet using the API [Twitter4j](https://twitter4j.o
 
 ## To Implement
 - [ ] Jetpack Compose
-- [ ] [Dependency Injection](#dependency-injection) - Use Hilt or Dagger2.
+- [ ] Dependency Injection - Use Hilt or Dagger2
 - [ ] Unit Test
 
 ## To Upgrade
