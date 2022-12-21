@@ -25,6 +25,7 @@ class TweetRepository {
         //@JvmField
         var selectedVideoPath = ""
         var storedTwitterException: TwitterException? = null
+        val uriPhotoKeywordList = listOf("image", "jpg", "photo")
     }
 
     init {
@@ -89,13 +90,7 @@ class TweetRepository {
 
     fun setUri(chosenURIs: MutableList<Uri>){
         chosenURIs.forEach { uri ->
-            if (uri.toString().contains("image", true)) {
-                imagesPathList.add(uri.toString())
-                println("Image URI is set!")
-            } else if (uri.toString().contains("jpg", true)) {
-                imagesPathList.add(uri.toString())
-                println("Image URI is set!")
-            } else if (uri.toString().contains("photo", true)) {
+            if (isUriAboutPhoto(uri)) {
                 imagesPathList.add(uri.toString())
                 println("Image URI is set!")
             } else {
@@ -103,6 +98,18 @@ class TweetRepository {
                 println("Video URI is set!")
             }
         }
+    }
+
+    fun isUriAboutPhoto(chosenUri: Uri): Boolean {
+        val stringUri = chosenUri.toString()
+
+        uriPhotoKeywordList.forEach { photoKeyword ->
+            if (stringUri.contains(photoKeyword)) {
+                return true
+            }
+        }
+
+        return false
     }
 
     fun getImagesPathListSize() = imagesPathList.size

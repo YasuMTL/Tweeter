@@ -326,13 +326,6 @@ class TweetFragment : Fragment(),
     override fun onClick(view: View) {
         println("TweetFragment: onClick() is fired!")
         when (view.id) {
-//            R.id.btnLogin -> {
-//                //checkIfILoggedIn()
-//                lifecycleScope.launch {
-//                    sharedViewModel.login(requireContext(), lifecycleScope)
-//                }
-//            }
-
             R.id.btnSendTweet -> {
                 binding.indeterminateBar.visibility = View.VISIBLE
 
@@ -353,7 +346,6 @@ class TweetFragment : Fragment(),
                                 requireContext().contentResolver,
                                 chosenURIs
                             )
-                        //chosenURIs.clear()
                     }
                     clearOutMediaFiles()
                 }
@@ -365,7 +357,6 @@ class TweetFragment : Fragment(),
 
                 lifecycleScope.launch {
                     settingDataStore.saveLoginInfoToPreferencesStore(isLoggedInManager = false, requireContext())
-                    //sharedViewModel.resetUiState()
                 }
                 val action = TweetFragmentDirections.actionTweetFragmentToReceiveTokenFragment()
                 println("Fragment: Tweet -> ReceiveToken")
@@ -378,24 +369,32 @@ class TweetFragment : Fragment(),
                 println("Uploaded files (URIs) were removed from memory")
             }
 
-            //R.id.btnUploadPhotoVideo -> { sharedViewModel.uploadPhotoVideo(requireContext()) }
             R.id.btnUploadPhotoVideo -> {
-                //sharedViewModel.uploadPhotoVideo(showMediaOptions)
                 if(isAdded) {
                     val dialog = MediaDialogFragment()
                     dialog.show(childFragmentManager, "MediaOptionsDialog")
                 } else {
                     println("${javaClass.name}: This fragment is not added yet to the activity")
                 }
-                //TODO test
-                //takeImageResult.launch(tempUri)
             }
         }
     }
 
     private fun showWarningWhileUploading() {
+        val typeOfMedia = getTypeOfUploadedMedia()
+        val warningMessage = "Uploading $typeOfMedia. It could take a moment..."
+
+        binding.warningMessage.text = warningMessage
         binding.warningMessage.visibility = View.VISIBLE
         println("warningMessage is visible")
+    }
+
+    private fun getTypeOfUploadedMedia(): String {
+        return if (tweetRepository.isUriAboutPhoto(chosenURIs.first())) {
+            "image(s)"
+        } else {
+            "one video"
+        }
     }
 
     private fun hideWarningWhileUploading() {
