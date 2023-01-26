@@ -29,7 +29,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.google.android.gms.ads.AdView
-import com.yasunari_k.saezuri.BR.viewModel
 import com.yasunari_k.saezuri.LoginInfo
 import com.yasunari_k.saezuri.R
 import com.yasunari_k.saezuri.SetAdView
@@ -361,23 +360,24 @@ class TweetFragment : Fragment(),
                 binding.indeterminateBar.visibility = View.VISIBLE
 
                 lifecycleScope.launch {
-                    //if (chosenURIs.isEmpty()) {
-                    if (wasVideoChosen || werePhotosChosen) {
-                        showLongToast("Uploading...")
-                        disableButtons()
-                        showWarningWhileUploading()
-                        statusCode.value = sharedViewModel.sendTweetWithChosenUri(
-                            binding.etTweet.text.toString(),
-                            requireContext().contentResolver,
-                            chosenURIs
-                        )
+                    if (!chosenURIs.isEmpty()) {
+                        if (wasVideoChosen || werePhotosChosen) {
+                            showLongToast("Uploading...")
+                            disableButtons()
+                            showWarningWhileUploading()
+                            statusCode.value = sharedViewModel.sendTweetWithChosenUri(
+                                binding.etTweet.text.toString(),
+                                requireContext().contentResolver,
+                                chosenURIs
+                            )
+                        }
+                        clearOutMediaFiles()
                     } else {
                         statusCode.value = sharedViewModel.sendTweet(
                             binding.etTweet.text.toString(),
                             requireContext().contentResolver
                         )
                     }
-                    clearOutMediaFiles()
                 }
             }
 
