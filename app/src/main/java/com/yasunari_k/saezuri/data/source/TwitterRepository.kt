@@ -30,11 +30,11 @@ class TwitterRepository(
 
     fun logout(){ receiveTokenRepository.logout() }
 
-    suspend fun sendTweet(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver): Int {
+    suspend fun sendTweet(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver): SendTweetResult {
         return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
     }
 
-    suspend fun sendTweetWithChosenUri(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver, chosenURIs: MutableList<Uri>): Int {
+    suspend fun sendTweetWithChosenUri(textTweet: String, token: String, tokenSecret: String, contentResolver: ContentResolver, chosenURIs: MutableList<Uri>): SendTweetResult {
         tweetRepository.setUri(chosenURIs)
         return tweetRepository.sendTweet(textTweet, getConfigurationBuilder(token, tokenSecret), contentResolver)
     }

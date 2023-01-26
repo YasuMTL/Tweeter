@@ -131,7 +131,7 @@ class TweetRepository {
     suspend fun sendTweet(textTweet: String,
                       configurationBuilder: ConfigurationBuilder,
                       contentResolver: ContentResolver
-    ): Int {
+    ): SendTweetResult {
         var statusCode = 0
         storedTwitterException = null
 
@@ -168,6 +168,7 @@ class TweetRepository {
                 println("te.getMessage(): " + te.message)
                 println("te.getErrorCode(): " + te.errorCode)
                 println("te.getErrorMessage(): " + te.errorMessage)
+                
                 statusCode = te.statusCode
             } catch (e: Exception) {
                 Log.d(TAG, e.message.toString())
@@ -188,7 +189,7 @@ class TweetRepository {
             Log.e(javaClass.name, "ここにキャンセル時の処理を記述", e)
         }
 
-        return statusCode
+        return SendTweetResult(statusCode = statusCode, twitterException = storedTwitterException)
     }
 
     fun getStoredTwitterException(): TwitterException? = storedTwitterException

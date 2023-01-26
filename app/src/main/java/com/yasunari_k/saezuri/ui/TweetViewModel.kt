@@ -8,6 +8,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.*
 import com.yasunari_k.saezuri.data.SettingDataStore
 import com.yasunari_k.saezuri.data.source.ReceiveTokenRepository
+import com.yasunari_k.saezuri.data.source.SendTweetResult
 import com.yasunari_k.saezuri.data.source.TweetRepository
 import com.yasunari_k.saezuri.data.source.TwitterRepository
 import kotlinx.coroutines.Dispatchers
@@ -97,11 +98,16 @@ class TweetViewModel(
         return uiState.value.isLoggedIn
     }
 
-    suspend fun sendTweet(textTweet: String, contentResolver: ContentResolver): Int = withContext(Dispatchers.IO){
-        return@withContext twitterRepository.sendTweet(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver)
+    suspend fun sendTweet(textTweet: String, contentResolver: ContentResolver) = withContext(Dispatchers.IO) {
+        return@withContext twitterRepository.sendTweet(
+            textTweet,
+            uiState.value.token,
+            uiState.value.tokenSecret,
+            contentResolver
+        )
     }
 
-    suspend fun sendTweetWithChosenUri(textTweet: String, contentResolver: ContentResolver, chosenURIs: MutableList<Uri>): Int = withContext(Dispatchers.IO){
+    suspend fun sendTweetWithChosenUri(textTweet: String, contentResolver: ContentResolver, chosenURIs: MutableList<Uri>): SendTweetResult = withContext(Dispatchers.IO){
         return@withContext twitterRepository.sendTweetWithChosenUri(textTweet, uiState.value.token, uiState.value.tokenSecret, contentResolver, chosenURIs)
     }
 

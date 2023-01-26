@@ -365,18 +365,37 @@ class TweetFragment : Fragment(),
                             showLongToast("Uploading...")
                             disableButtons()
                             showWarningWhileUploading()
-                            statusCode.value = sharedViewModel.sendTweetWithChosenUri(
+
+                            val sendTweetResult = sharedViewModel.sendTweetWithChosenUri(
                                 binding.etTweet.text.toString(),
                                 requireContext().contentResolver,
                                 chosenURIs
                             )
+
+                            statusCode.value = sendTweetResult.statusCode
+                            if (sendTweetResult.twitterException != null) {
+                                val te = sendTweetResult.twitterException
+                                when(te!!.errorCode) {
+                                    187 -> showLongToast("You're trying to send a text identical to the previous one. Please change it to send a tweet.")
+                                    else -> showLongToast(sendTweetResult.twitterException!!.errorMessage.toString())
+                                }
+                            }
                         }
                         clearOutMediaFiles()
                     } else {
-                        statusCode.value = sharedViewModel.sendTweet(
+                        val sendTweetResult = sharedViewModel.sendTweet(
                             binding.etTweet.text.toString(),
                             requireContext().contentResolver
                         )
+
+                        statusCode.value = sendTweetResult.statusCode
+                        if (sendTweetResult.twitterException != null) {
+                            val te = sendTweetResult.twitterException
+                            when(te!!.errorCode) {
+                                187 -> showLongToast("You're trying to send a text identical to the previous one. Please change it to send a tweet.")
+                                else -> showLongToast(sendTweetResult.twitterException!!.errorMessage.toString())
+                            }
+                        }
                     }
                 }
             }
