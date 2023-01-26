@@ -6,7 +6,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.yasu_k.saezuri.ui.TweetViewModel" />
+            type="com.yasunari_k.saezuri.ui.TweetViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
