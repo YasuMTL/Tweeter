@@ -6,7 +6,7 @@
 
     <fragment
         android:id="@+id/receiveTokenFragment"
-        android:name="com.yasu_k.saezuri.ui.ReceiveTokenFragment"
+        android:name="com.yasunari_k.saezuri.ui.ReceiveTokenFragment"
         android:label="Saezuri"
         app:defaultNavHost="true" >
         <action
@@ -17,7 +17,7 @@
     </fragment>
     <fragment
         android:id="@+id/tweetFragment"
-        android:name="com.yasu_k.saezuri.ui.TweetFragment"
+        android:name="com.yasunari_k.saezuri.ui.TweetFragment"
         android:label="Saezuri" >
         <action
             android:id="@+id/action_tweetFragment_to_receiveTokenFragment"

@@ -3,12 +3,13 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'androidx.navigation.safeargs.kotlin'
+    id 'org.jetbrains.kotlin.android'
 }
 
 android {
     compileSdkVersion 33
     defaultConfig {
-        applicationId "com.yasu_k.saezuri"
+        applicationId "com.yasunari_k.saezuri"
         maxSdkVersion 33
 //        minSdkVersion 23
         minSdkVersion 28
@@ -41,14 +42,15 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     //https://android.jlelse.eu/material-design-for-android-523996401fc1
-    implementation "com.google.android.material:material:1.8.0-beta01"
+    implementation "com.google.android.material:material:1.9.0-alpha01"
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.core:core-ktx:+'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.assertj:assertj-core:3.23.1'
-    testImplementation 'androidx.test:runner:1.5.1'
+    testImplementation 'androidx.test:runner:1.5.2'
     testImplementation 'io.mockk:mockk:1.13.3'
 
     // Required -- JUnit 4 framework
@@ -60,10 +62,10 @@ dependencies {
     testImplementation "org.mockito.kotlin:mockito-kotlin:4.1.0"
 
     testImplementation "org.robolectric:robolectric:4.9"
-    testImplementation 'androidx.test.ext:junit:1.1.4'
+    testImplementation 'androidx.test.ext:junit:1.1.5'
 
-    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
     implementation 'org.twitter4j:twitter4j-core:4.0.7'
     //implementation 'org.twitter4j:twitter4j-core:4.1.2'

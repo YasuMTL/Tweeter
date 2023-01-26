@@ -6,7 +6,7 @@
     <data>
         <variable
             name="viewModel"
-            type="com.yasu_k.saezuri.ui.TweetViewModel" />
+            type="com.yasunari_k.saezuri.ui.TweetViewModel" />
     </data>
 
     <LinearLayout
@@ -14,7 +14,7 @@
         android:layout_height="match_parent"
         android:background="@android:color/white"
         android:orientation="vertical"
-        tools:context=".Tweet">
+        tools:context="com.yasunari_k.saezuri.Tweet">
 
         <LinearLayout
             android:layout_width="match_parent"
