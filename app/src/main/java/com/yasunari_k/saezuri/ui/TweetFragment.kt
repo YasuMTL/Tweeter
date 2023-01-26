@@ -313,8 +313,10 @@ class TweetFragment : Fragment(),
     }
 
     private fun removeUploadedFiles() {
-        chosenURIs.clear()
-        showLongToast("Uploaded files were removed")
+        if(chosenURIs.isNotEmpty()) {
+            chosenURIs.clear()
+            showLongToast("Uploaded files were removed")
+        }
     }
 
     private fun setupButtons() {
