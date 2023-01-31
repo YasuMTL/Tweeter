@@ -29,10 +29,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.google.android.gms.ads.AdView
-import com.yasunari_k.saezuri.LoginInfo
-import com.yasunari_k.saezuri.R
-import com.yasunari_k.saezuri.SetAdView
-import com.yasunari_k.saezuri.TextCounter
+import com.yasunari_k.saezuri.*
 import com.yasunari_k.saezuri.data.SettingDataStore
 import com.yasunari_k.saezuri.data.source.ImageFileHelper
 import com.yasunari_k.saezuri.data.source.ReceiveTokenRepository
@@ -42,6 +39,7 @@ import com.yasunari_k.saezuri.databinding.FragmentTweetBinding
 import kotlinx.coroutines.launch
 import twitter4j.auth.OAuthAuthorization
 import twitter4j.conf.ConfigurationContext
+import javax.inject.Inject
 
 private var mAdView: AdView? = null
 
@@ -54,8 +52,16 @@ class TweetFragment : Fragment(),
     private var _binding: FragmentTweetBinding? = null
     private val binding get() = _binding!!
 
-    private val tweetRepository = TweetRepository()
-    private val receiveTokenRepository = ReceiveTokenRepository()
+    @Inject
+    lateinit var tweetRepository: TweetRepository
+    @Inject
+    lateinit var receiveTokenRepository: ReceiveTokenRepository
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+
+        (requireActivity().application as MyApplication).appComponent.inject(this)
+    }
 
     private val sharedViewModel: TweetViewModel by activityViewModels {
         TweetViewModelFactory(tweetRepository, receiveTokenRepository, settingDataStore)
