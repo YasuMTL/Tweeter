@@ -26,8 +26,6 @@ import twitter4j.conf.ConfigurationBuilder
 import javax.inject.Inject
 import javax.inject.Singleton
 
-//@Inject
-//lateinit var spTwitterToken: SharedPreferences
 data class TokenState(
     val accessToken: AccessToken? = null
 )

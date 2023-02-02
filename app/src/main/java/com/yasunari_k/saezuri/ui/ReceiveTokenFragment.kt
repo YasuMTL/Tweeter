@@ -7,14 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.yasunari_k.saezuri.MyApplication
-import com.yasunari_k.saezuri.data.SettingDataStore
-import com.yasunari_k.saezuri.data.source.ReceiveTokenRepository
-import com.yasunari_k.saezuri.data.source.TweetRepository
 import com.yasunari_k.saezuri.databinding.FragmentReceiveTokenBinding
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,17 +20,7 @@ class ReceiveTokenFragment : Fragment() {
     private val binding get() = _binding!!
 
     @Inject
-    lateinit var tweetRepository: TweetRepository
-    @Inject
-    lateinit var receiveTokenRepository: ReceiveTokenRepository
-
-    private val settingDataStore: SettingDataStore by lazy {
-        SettingDataStore(requireContext())
-    }
-
-    private val sharedViewModel: TweetViewModel by activityViewModels {
-        TweetViewModelFactory(tweetRepository, receiveTokenRepository, settingDataStore)
-    }
+    lateinit var sharedViewModel: TweetViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
