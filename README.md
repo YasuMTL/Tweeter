@@ -16,7 +16,8 @@ A Twitter client app to send tweet using the API [Twitter4j](https://twitter4j.o
 
 ## To Implement
 - [ ] Jetpack Compose
-- [ ] Dependency Injection - Use Hilt or Dagger2
+- [x] Dependency Injection with Dagger 2 2023-02-15
+- [ ] Migrating Dagger 2 to Hilt
 - [ ] Unit Test
 
 ## To Upgrade
