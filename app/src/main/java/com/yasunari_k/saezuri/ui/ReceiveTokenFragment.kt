@@ -1,38 +1,36 @@
 package com.yasunari_k.saezuri.ui
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
-import com.yasunari_k.saezuri.data.SettingDataStore
-import com.yasunari_k.saezuri.data.source.ReceiveTokenRepository
-import com.yasunari_k.saezuri.data.source.TweetRepository
+import com.yasunari_k.saezuri.MyApplication
 import com.yasunari_k.saezuri.databinding.FragmentReceiveTokenBinding
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class ReceiveTokenFragment : Fragment() {
     private var _binding: FragmentReceiveTokenBinding? = null
     private val binding get() = _binding!!
 
-    private val tweetRepository = TweetRepository()
-    private val receiveTokenRepository = ReceiveTokenRepository()
-    private val settingDataStore: SettingDataStore by lazy {
-        SettingDataStore(requireContext())
-    }
-
-    private val sharedViewModel: TweetViewModel by activityViewModels {
-        TweetViewModelFactory(tweetRepository, receiveTokenRepository, settingDataStore)
-    }
+    @Inject
+    lateinit var sharedViewModel: TweetViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         println("ReceiveToken: onCreate called")
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+
+        (requireActivity().application as MyApplication).appComponent.inject(this)
     }
 
     override fun onStop() {

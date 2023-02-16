@@ -7,10 +7,12 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.yasunari_k.saezuri.LoginInfo
 import com.yasunari_k.saezuri.data.SettingDataStore
+import kotlinx.coroutines.flow.StateFlow
 import twitter4j.TwitterException
 import twitter4j.conf.ConfigurationBuilder
+import javax.inject.Inject
 
-class TwitterRepository(
+class TwitterRepository @Inject constructor(
     private val tweetRepository: TweetRepository,
     private val receiveTokenRepository: ReceiveTokenRepository,
     private val dataStore: SettingDataStore
@@ -67,4 +69,6 @@ class TwitterRepository(
     fun takeOneVideo(context: Context, launcher: ActivityResultLauncher<Uri>){ tweetRepository.takeOneVideo(context, launcher) }
     fun clearUploadedMediaFiles() { tweetRepository.flushOutUploadedImageVideo() }
     fun getStoredTwitterException(): TwitterException? = tweetRepository.getStoredTwitterException()
+
+    fun getTokenState(): StateFlow<TokenState> = receiveTokenRepository.accTokenState
 }

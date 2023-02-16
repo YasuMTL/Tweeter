@@ -5,17 +5,19 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
-import androidx.lifecycle.*
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.yasunari_k.saezuri.data.SettingDataStore
-import com.yasunari_k.saezuri.data.source.ReceiveTokenRepository
 import com.yasunari_k.saezuri.data.source.SendTweetResult
-import com.yasunari_k.saezuri.data.source.TweetRepository
 import com.yasunari_k.saezuri.data.source.TwitterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import twitter4j.TwitterException
+import javax.inject.Inject
 
 data class LoginUiState(
     val isLoggedIn: Boolean = false,
@@ -25,17 +27,32 @@ data class LoginUiState(
 
 const val TAG = "TweetViewModel"
 
-class TweetViewModel(
-    tweetRepository: TweetRepository,
-    receiveTokenRepository: ReceiveTokenRepository,
-    dataStore: SettingDataStore
+class TweetViewModel @Inject constructor(
+    private val twitterRepository: TwitterRepository,
+    private val dataStore: SettingDataStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    //TODO: Use Dependency Injection later
-    private val twitterRepository = TwitterRepository(tweetRepository, receiveTokenRepository, dataStore)
+    companion object {
+//        val Factory: ViewModelProvider.Factory =
+        fun provideViewModelFactory(
+            twitterRepository: TwitterRepository,
+            dataStore: SettingDataStore
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                if(modelClass.isAssignableFrom(TweetViewModel::class.java)){
+                    @Suppress("UNCHECKED_CAST")
+                    return TweetViewModel(
+                        twitterRepository = twitterRepository,
+                        dataStore = dataStore
+                    ) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -53,7 +70,8 @@ class TweetViewModel(
                 Log.i(TAG, "Update completed. uiState.value: ${uiState.value}")
             }
 
-            receiveTokenRepository.accTokenState.collect { tokenState ->
+            val accessTokenState = twitterRepository.getTokenState()
+            accessTokenState.collect { tokenState ->
                 val token = tokenState.accessToken?.token ?: ""
                 val tokenSecret = tokenState.accessToken?.tokenSecret ?: ""
 
@@ -148,22 +166,5 @@ class TweetViewModel(
     fun clearUploadedMediaFiles() { twitterRepository.clearUploadedMediaFiles() }
     fun getStoredTwitterException(): TwitterException? {
         return twitterRepository.getStoredTwitterException()
-    }
-}
-
-class TweetViewModelFactory(
-    private val tweetRepository: TweetRepository,
-    private val receiveTokenRepository: ReceiveTokenRepository,
-    private val dataStore: SettingDataStore
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if(modelClass.isAssignableFrom(TweetViewModel::class.java)){
-            @Suppress("UNCHECKED_CAST")
-            return TweetViewModel(
-                tweetRepository = tweetRepository,
-                receiveTokenRepository = receiveTokenRepository,
-                dataStore = dataStore) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -24,24 +24,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.google.android.gms.ads.AdView
-import com.yasunari_k.saezuri.LoginInfo
-import com.yasunari_k.saezuri.R
-import com.yasunari_k.saezuri.SetAdView
-import com.yasunari_k.saezuri.TextCounter
+import com.yasunari_k.saezuri.*
 import com.yasunari_k.saezuri.data.SettingDataStore
 import com.yasunari_k.saezuri.data.source.ImageFileHelper
-import com.yasunari_k.saezuri.data.source.ReceiveTokenRepository
 import com.yasunari_k.saezuri.data.source.TweetRepository
 import com.yasunari_k.saezuri.data.source.TweetRepository.Companion.imagesPathList
 import com.yasunari_k.saezuri.databinding.FragmentTweetBinding
 import kotlinx.coroutines.launch
 import twitter4j.auth.OAuthAuthorization
 import twitter4j.conf.ConfigurationContext
+import javax.inject.Inject
 
 private var mAdView: AdView? = null
 
@@ -54,16 +50,20 @@ class TweetFragment : Fragment(),
     private var _binding: FragmentTweetBinding? = null
     private val binding get() = _binding!!
 
-    private val tweetRepository = TweetRepository()
-    private val receiveTokenRepository = ReceiveTokenRepository()
+    @Inject
+    lateinit var tweetRepository: TweetRepository
 
-    private val sharedViewModel: TweetViewModel by activityViewModels {
-        TweetViewModelFactory(tweetRepository, receiveTokenRepository, settingDataStore)
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+
+        (requireActivity().application as MyApplication).appComponent.inject(this)
     }
 
-    private val settingDataStore: SettingDataStore by lazy {
-        SettingDataStore(requireContext())
-    }
+    @Inject
+    lateinit var sharedViewModel: TweetViewModel
+
+    @Inject
+    lateinit var settingDataStore: SettingDataStore
 
     private val statusCode: MutableLiveData<Int> by lazy {
         MutableLiveData()
@@ -362,7 +362,22 @@ class TweetFragment : Fragment(),
                 binding.indeterminateBar.visibility = View.VISIBLE
 
                 lifecycleScope.launch {
-                    if (!chosenURIs.isEmpty()) {
+                    if (chosenURIs.isEmpty()) {
+                        val sendTweetResult = sharedViewModel.sendTweet(
+                            binding.etTweet.text.toString(),
+                            requireContext().contentResolver
+                        )
+
+                        statusCode.value = sendTweetResult.statusCode
+
+                        if (sendTweetResult.twitterException != null) {
+                            val te = sendTweetResult.twitterException
+                            when(te!!.errorCode) {
+                                187 -> showLongToast("You're trying to send a text identical to the previous one. Please change it to send a tweet.")
+                                else -> showLongToast(sendTweetResult.twitterException!!.errorMessage.toString())
+                            }
+                        }
+                    } else {
                         if (wasVideoChosen || werePhotosChosen) {
                             showLongToast("Uploading...")
                             disableButtons()
@@ -384,20 +399,6 @@ class TweetFragment : Fragment(),
                             }
                         }
                         clearOutMediaFiles()
-                    } else {
-                        val sendTweetResult = sharedViewModel.sendTweet(
-                            binding.etTweet.text.toString(),
-                            requireContext().contentResolver
-                        )
-
-                        statusCode.value = sendTweetResult.statusCode
-                        if (sendTweetResult.twitterException != null) {
-                            val te = sendTweetResult.twitterException
-                            when(te!!.errorCode) {
-                                187 -> showLongToast("You're trying to send a text identical to the previous one. Please change it to send a tweet.")
-                                else -> showLongToast(sendTweetResult.twitterException!!.errorMessage.toString())
-                            }
-                        }
                     }
                 }
             }
@@ -416,6 +417,7 @@ class TweetFragment : Fragment(),
 
             R.id.btnClear -> {
                 clearOutEtTweet()
+                chosenURIs.clear()
                 sharedViewModel.clearUploadedMediaFiles()
                 println("Uploaded files (URIs) were removed from memory")
             }

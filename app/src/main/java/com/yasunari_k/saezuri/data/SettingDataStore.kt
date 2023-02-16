@@ -8,13 +8,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val TWITTER_PREFERENCES_NAME = "twitter_preferences"
 private val Context.dataStore : DataStore<Preferences> by preferencesDataStore(
     name = TWITTER_PREFERENCES_NAME
 )
 
-class SettingDataStore(context: Context) {
+@Singleton
+class SettingDataStore @Inject constructor(context: Context) {
     private val IS_LOGGED_IN_MANAGER = booleanPreferencesKey("is_logged_in_manager")
     //How to store configuration builder?
     private val TWITTER_TOKEN_MANAGER = stringPreferencesKey("twitter_token_manager")

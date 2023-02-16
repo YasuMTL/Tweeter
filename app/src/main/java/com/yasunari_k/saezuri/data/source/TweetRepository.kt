@@ -17,8 +17,11 @@ import twitter4j.conf.ConfigurationBuilder
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class TweetRepository {
+@Singleton
+class TweetRepository @Inject constructor() {
 
     companion object {
         val imagesPathList = arrayListOf<String>()
