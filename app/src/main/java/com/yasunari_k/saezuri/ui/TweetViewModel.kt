@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.yasunari_k.saezuri.data.SettingDataStore
 import com.yasunari_k.saezuri.data.source.SendTweetResult
@@ -33,6 +34,25 @@ class TweetViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+
+    companion object {
+//        val Factory: ViewModelProvider.Factory =
+        fun provideViewModelFactory(
+            twitterRepository: TwitterRepository,
+            dataStore: SettingDataStore
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                if(modelClass.isAssignableFrom(TweetViewModel::class.java)){
+                    @Suppress("UNCHECKED_CAST")
+                    return TweetViewModel(
+                        twitterRepository = twitterRepository,
+                        dataStore = dataStore
+                    ) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    }
 
     init {
         viewModelScope.launch {

@@ -1,6 +1,5 @@
 package com.yasunari_k.saezuri.di
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.yasunari_k.saezuri.data.SettingDataStore
 import com.yasunari_k.saezuri.data.source.TwitterRepository
@@ -15,7 +14,11 @@ class TweetViewModelModule {
         twitterRepository: TwitterRepository,
         dataStore: SettingDataStore
     ): ViewModelProvider.Factory {
-        return object : ViewModelProvider.Factory {
+        return TweetViewModel.provideViewModelFactory(
+            twitterRepository = twitterRepository,
+            dataStore = dataStore
+        )
+    /*object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 if(modelClass.isAssignableFrom(TweetViewModel::class.java)){
                     @Suppress("UNCHECKED_CAST")
@@ -26,6 +29,6 @@ class TweetViewModelModule {
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
-        }
+        }*/
     }
 }
